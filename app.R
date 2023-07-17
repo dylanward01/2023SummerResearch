@@ -72,10 +72,10 @@ ui <- fluidPage(
                                             ".csv")),
                        checkboxInput("header", "Header", TRUE),
                        numericInput(inputId = "Num2", label = "Choose number of observations per approximately stationary block*", 
-                                   value = max(floor(length(df)/6),50), step = 1),
+                                   value = NULL, step = 1),
                        
                        numericInput(inputId = "Tapers2", label = "Choose number of tapers to use in multitaper spectral estimator**", 
-                                   value = 15, step = 1),
+                                   value = NULL, step = 1),
                        
                        selectInput(inputId = "Signi2", label="Choose significance level", 
                                    choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
@@ -145,7 +145,7 @@ server <- function(input,output, session) {
       } else {
         tap=c(31, 177)
       }
-    } else if(t2=20000){
+    } else if(t2 == 20000){
       if(sc_val == 141) {
         tap=11
       } else {
@@ -186,6 +186,14 @@ server <- function(input,output, session) {
     })
   })
   observeEvent(input$Num2, {
+    file <- input$file_csv
+    ext <- tools::file_ext(file$datapath)
+    le <- length(file[[1]])
+    if(le == 0){
+      output$res10 <- renderText({
+          paste()
+       })
+    } else {
     T_B <- input$Num2
     K <- input$Tapers2
     bw <- floor((K+1)*(T_B/(T_B+1)))
@@ -198,6 +206,7 @@ server <- function(input,output, session) {
     output$res10 <- renderText({
       paste("**Valid choices range from 1 to ", floor(max_tap))
     })
+    }
     
   })
   #observeEvent(inpit$Tapers2, {
