@@ -12,6 +12,7 @@ library(ggplot2)
 library(fEBAcpp)
 library(shinyjs)
 library(fda)
+library(plotly)
 
 source("EBA_functions.R")
 source("fEBA_Rfns.R")
@@ -121,7 +122,7 @@ ui <- fluidPage(
                        radioButtons(inputId = "downloadType", label = "Select download type", choices = list("png","pdf")),
                        downloadButton('downloadData','Download the plot') ),
                        conditionalPanel(condition = "input.type == 'Functional'",
-                       plotOutput("Fxn_Plota", height=400),
+                       plotlyOutput("Fxn_Plota", height=400),
                        splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                          cellWidths = c( "20%", "20%", "30%"),htmlOutput("FxnPlotaDesc"), 
                                    hidden(selectInput(inputId = "x_F1", label=NULL, choices = NULL, selected = NULL)), 
@@ -131,8 +132,24 @@ ui <- fluidPage(
                        splitLayout(cellWidths = c("20%", "25%", "25%", "30%"), htmlOutput("Blank101"),
                                    htmlOutput("FxnbPlotDesc"), 
                                    hidden(selectInput(inputId = "q_F1", label=NULL, choices=NULL, selected = NULL)),
-                                   htmlOutput("Blank2")
-                                        )
+                                   htmlOutput("Blank2")), 
+                       splitLayout(cellWidths = c("80%", "20%"),
+                                   (plotlyOutput("Plotly_Fxna", height=600)), 
+                                   verticalLayout(plotOutput("Blank12121", height = 150), 
+                                   hidden(radioButtons("Fxn_Row", label="View a Single Row?", choices=c("Yes", "No" ), 
+                                                       selected = "No"))
+                                   )
+                                   ),
+                       hidden(plotOutput("Plotly_Fxna.5", height = 400)),
+                       splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                   cellWidths = c( "20%", "20%", "30%"),htmlOutput("FxnPlot11Desc"), 
+                                   hidden(selectInput(inputId = "x11_F1", label=NULL, choices = NULL, selected = NULL)), 
+                                   htmlOutput("test00")),
+                       plotlyOutput("Plotly_Fxnb", height=600), 
+                       splitLayout(cellWidths = c("20%", "25%", "25%", "30%"), htmlOutput("Blank10100"),
+                                   htmlOutput("FxnPlot22Desc"), 
+                                   hidden(selectInput(inputId = "q11_F1", label=NULL, choices=NULL, selected = NULL)),
+                                   htmlOutput("Blank2023"))
       )),
       conditionalPanel(condition = "input.tabselected==2",
                        plotOutput("Image_Plota", height=400),
@@ -143,6 +160,7 @@ ui <- fluidPage(
   ))
 
 server <- function(input,output, session) {
+  
   output$BlankSpace <- renderText({
     paste("\n")
   })
@@ -253,7 +271,7 @@ server <- function(input,output, session) {
     paste(h6("*Choices must satisfy 30 ", HTML("&le;"), "N", HTML("&le;"), "T/2"))
   })
   output$F1_2 <- renderText({
-    paste(h6("**Choices must satisfy 1 ", HTML("&le;"), "K", HTML("&le;"), "floor(N/4 - 1)"))
+    paste(h6("**Choices must satisfy 1 ", HTML("&le;"), "K", "<", "floor(N/4 - 1)"))
   })
   output$F1_3 <- renderText({
     paste(h6("***Choices must satisfy 1 ", HTML("&le;"), "Rsel", HTML("&le;"), "R"))
@@ -274,10 +292,11 @@ server <- function(input,output, session) {
     
     if (input$SimF1 == "W"){
       X=fws.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
-      output$Fxn_Plota <- renderPlot({
-        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
+      output$Fxn_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
           xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
       })
       pse=fhat(X,N,K,Rsel,std);
        
@@ -290,10 +309,11 @@ server <- function(input,output, session) {
       
     } else if (input$SimF1 == "L") {
       X=f3bL.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
-      output$Fxn_Plota <- renderPlot({
-        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
+      output$Fxn_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
           xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
       })
       pse=fhat(X,N,K,Rsel,std);
        cmpnt="1-1"; #select component to view
@@ -305,10 +325,11 @@ server <- function(input,output, session) {
       
     } else if (input$SimF1 == "S") {
       X=f3bS.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
-      output$Fxn_Plota <- renderPlot({
-        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
+      output$Fxn_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
           xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
       })
        pse=fhat(X,N,K,Rsel,std);
        cmpnt="1-1"; #select component to view
@@ -319,16 +340,37 @@ server <- function(input,output, session) {
        
     }
     
-    show("x_F1")
-    show("q_F1")
+    
     output$FxnPlotaDesc <- renderText({
       paste(h4("Currently viewing row "))
     })
+    
     output$FxnbPlotDesc <- renderText({
       paste(h4("Currently viewing component "))
     })
+    output$FxnPlot22Desc <- renderText({
+      paste(h4("Currently viewing component "))
+    })
+    show("x_F1")
+    show("q_F1")
+    show("q11_F1")
+    show("Plotly_Fxna")
     updateSelectInput(session, "x_F1", choices = seq(from=1, to = dim(X)[1], by=1), selected=1)
     updateSelectInput(session, "q_F1", choices=plot.cmp, selected = plot.cmp[1])
+    updateSelectInput(session, "q11_F1", choices=plot.cmp, selected = plot.cmp[1])
+    output$Plotly_Fxna <- renderPlotly({
+      plot_ly(z = ~X) %>% add_surface() %>% layout(scene = list(
+        xaxis = list(title="Functional Domain",
+                     range = c(0, as.numeric(input$RF1) + 0.5),
+                     ticktext = (seq(1, as.numeric(input$RF1))), 
+                     tickvals = (seq(0, as.numeric(input$RF1) - 1)), 
+                     tickmode = "array"), 
+        yaxis = list(title = "Row"), 
+        zaxis = list(title="Value")
+      )) %>% colorbar(title = "Value", len=1)
+    })
+    show("Fxn_Row")
+    
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
         plot.main = plot.main, plot.cmp = plot.cmp, plot.data = plot.data)
     
@@ -339,6 +381,31 @@ server <- function(input,output, session) {
                axes = TRUE, col = inferno(256), 
                main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i"); 
   })
+  
+  output$Plotly_Fxnb <- renderPlotly({
+    plot_ly(y=~plot.listF1()[[1]], x=~plot.listF1()[[2]], z=~t(Re(plot.listF1()[[3]][,"1-1",])))  %>%layout(scene = list( 
+           xaxis = list(title='Frequency',range = c(0, 0.5)), 
+           yaxis = list(title="Time"), 
+           zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+  })
+  observeEvent(input$Fxn_Row, ignoreNULL = TRUE, {
+    if(input$Fxn_Row == 'No'){
+      hide("Plotly_Fxna.5")
+    } else {
+      show("Plotly_Fxna.5")
+      output$Plotly_Fxna.5 <- renderPlot({
+        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][1,])), y=plot.listF1()[[6]][1,])) + 
+          xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          scale_x_continuous(limits=c(0,1), expand=c(0,0))
+      })
+      show("x11_F1")
+      output$FxnPlot11Desc <- renderText({
+        paste(h4("Currently viewing row "))
+      })
+      updateSelectInput(session, "x11_F1", choices = seq(from=1, to = dim(plot.listF1()[[6]])[1], by=1), selected=1)
+    }
+  })
+ 
   plot.listaa <- eventReactive(input$file_csv, ignoreNULL = FALSE,  {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -535,10 +602,11 @@ server <- function(input,output, session) {
     if(is.na(curr_row)){
       
     } else {
-      output$Fxn_Plota <- renderPlot({
-        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
+      output$Fxn_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
           xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
       })
     }
     
@@ -549,15 +617,54 @@ server <- function(input,output, session) {
     if(is.na(curr_comp)){
       
     } else {
+      if(is.na(plot.listF1()[[4]])){
+        
+      } else {
       output$Fxn_Plotb <- renderPlot({
         image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
                    axes = TRUE, col = inferno(256), 
                    main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i"); 
+      
+      })
+      }
+    }
+    
+  })
+  
+  observeEvent(input$x11_F1, ignoreNULL = FALSE, {
+    curr_row <- as.numeric(input$x11_F1)
+    if(is.na(curr_row)){
+      
+    } else {
+      output$Plotly_Fxna.5 <- renderPlot({
+        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
+          xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          scale_x_continuous(limits=c(0,1), expand=c(0,0))
       })
     }
     
   })
   
+  observeEvent(input$q11_F1, ignoreNULL = TRUE, {
+    curr_comp <- as.character(input$q11_F1)
+    if(is.na(curr_comp)){
+      
+    } else {
+      if(is.na(plot.listF1()[[4]])){
+        
+      } else {
+        output$Plotly_Fxnb <- renderPlotly({
+          plot_ly(y=~plot.listF1()[[1]], x=~plot.listF1()[[2]], z=~t(Re(plot.listF1()[[3]][,curr_comp,])))  %>%layout(scene = list( 
+            xaxis = list(title='Frequency',range = c(0, 0.5)), 
+            yaxis = list(title="Time"), 
+            zaxis = list(title="Value"), 
+            camera = list(eye = list(x=0, y=0, z=0)))) %>% add_surface() %>% colorbar(title="Value", len=1)
+          
+        })
+      }
+    }
+    
+  })
   plot.list <- eventReactive(input$go, ignoreNULL = FALSE, {
     X = eba.simdata(T=as.numeric(input$Time))
     
