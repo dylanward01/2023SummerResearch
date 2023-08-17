@@ -166,7 +166,7 @@ server <- function(input,output, session) {
   })
   observe({
     TF1 <- as.numeric(input$TsF1)
-    new_vals <- floor(seq(from=30, to=TF1/2, length.out = 10))
+    new_vals <- floor(seq(from=30, to=TF1, length.out = 20))
     updateSelectInput(session, "NF1", choices=new_vals, selected=new_vals[2])
     
   })
@@ -268,7 +268,7 @@ server <- function(input,output, session) {
     paste("*Please enter a dataframe")
   })
   output$F1_1 <- renderText({
-    paste(h6("*Choices must satisfy 30 ", HTML("&le;"), "N", HTML("&le;"), "T/2"))
+    paste(h6("*Choices must satisfy 30 ", HTML("&le;"), "N", HTML("&le;"), "T"))
   })
   output$F1_2 <- renderText({
     paste(h6("**Choices must satisfy 1 ", HTML("&le;"), "K", "<", "floor(N/4 - 1)"))
@@ -657,8 +657,7 @@ server <- function(input,output, session) {
           plot_ly(y=~plot.listF1()[[1]], x=~plot.listF1()[[2]], z=~t(Re(plot.listF1()[[3]][,curr_comp,])))  %>%layout(scene = list( 
             xaxis = list(title='Frequency',range = c(0, 0.5)), 
             yaxis = list(title="Time"), 
-            zaxis = list(title="Value"), 
-            camera = list(eye = list(x=0, y=0, z=0)))) %>% add_surface() %>% colorbar(title="Value", len=1)
+            zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
           
         })
       }
