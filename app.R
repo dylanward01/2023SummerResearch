@@ -9,13 +9,15 @@ library(grid)
 library(gridBase)
 library(gridExtra)
 library(ggplot2)
-library(fEBAcpp)
+library(RcppArmadillo)
 library(shinyjs)
 library(fda)
 library(plotly)
 
+
 source("EBA_functions.R")
 source("fEBA_Rfns.R")
+Rcpp::sourceCpp("fEBA_072321.cpp")
 df <- read.csv("xtsample.csv")
 df <- df[[1]]
 
@@ -68,7 +70,7 @@ ui <- fluidPage(
                       selectInput(inputId = "KF1", label = "Choose number of tapers to use in multitaper spectral estimator** (K)", 
                                   choices = NULL, selected = NULL),
                       selectInput(inputId = "RselF1", label = "Choose number of points in the functional domain to use in computing test statistics*** (Rsel)", 
-                                  choices = NULL, selected = NULL), 
+                                  choices = c(5,10), selected = 5), 
                       selectInput(inputId = "AlphaF1", label="Choose significance level", 
                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
                       radioButtons(inputId = "TF_F1", label = "Standardize", 
@@ -124,15 +126,25 @@ ui <- fluidPage(
                        conditionalPanel(condition = "input.type == 'Functional'",
                        plotlyOutput("Fxn_Plota", height=400),
                        splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
-                         cellWidths = c( "20%", "20%", "30%"),htmlOutput("FxnPlotaDesc"), 
+                         cellWidths = c( "25%", "35%", "20%"),htmlOutput("FxnPlotaDesc"), 
                                    hidden(selectInput(inputId = "x_F1", label=NULL, choices = NULL, selected = NULL)), 
                                    htmlOutput("test12121")),
                      
                        plotOutput("Fxn_Plotb", height=600), 
-                       splitLayout(cellWidths = c("20%", "25%", "25%", "30%"), htmlOutput("Blank101"),
+                       splitLayout(cellWidths = c("10%", "35%", "20%", "25%", "10%"), 
+                                   htmlOutput("BlankSpot#2"),
+                                   
                                    htmlOutput("FxnbPlotDesc"), 
-                                   hidden(selectInput(inputId = "q_F1", label=NULL, choices=NULL, selected = NULL)),
-                                   htmlOutput("Blank2")), 
+                                   
+                                   htmlOutput("Blank2"),
+                                   hidden(sliderInput("plot1_FxnCheck",min=1,max=10,step=1,value=1,label=NULL, width = "125%",ticks = FALSE)),
+                                   htmlOutput("BlankSpot10101")
+                                   #hidden(selectInput(inputId = "q_F1", label=NULL, choices=NULL, selected = NULL)),
+                                   ), 
+                       tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
+                                                 visibility: hidden !important;
+                                                 }' ))),
+                       
                        splitLayout(cellWidths = c("80%", "20%"),
                                    (plotlyOutput("Plotly_Fxna", height=600)), 
                                    verticalLayout(plotOutput("Blank12121", height = 150), 
@@ -178,11 +190,6 @@ server <- function(input,output, session) {
       updateSelectInput(session, "KF1", choices = new_vals, selected=new_vals[3])  
     }
     
-  })
-  observe({
-    R_val <- as.numeric(input$RF1)
-    new_vals <- seq(from=1, to=R_val, by=1)
-    updateSelectInput(session, "RselF1", choices = new_vals, selected = new_vals[length(new_vals)-1])
   })
   observe({
     t2 <- as.numeric(input$Time)
@@ -340,9 +347,29 @@ server <- function(input,output, session) {
        
     }
     
+    conf <- numeric(length(pse))
+    dim(conf) <- dim(pse)
+    dimnames(conf) <- dimnames(pse)
+    for(k in 1:dim(pse)[3]){
+      #curr_slice <- pse[,,k]
+      for(j in 1:dim(pse)[2]){
+        first_col <- ((j - 1) %% (as.numeric(input$RselF1))) + 1 
+        second_col <- ((j - 1) %/% (as.numeric(input$RselF1))) + 1
+        cmpt_1 <- paste(first_col, "-", first_col, sep="")
+        cmpt_2 <- paste(second_col, "-", second_col, sep="")
+        for(i in 1:dim(pse)[1]){
+          if(first_col == second_col){
+            conf[i,j,k] <- Re(pse[i,j,k])
+          } else {
+            conf[i,j,k] <- Re((Mod(pse[i,j,k])**2) / (pse[i,cmpt_1,k] * pse[i,cmpt_2,k]))
+          }
+        }
+      }
+    }
+    plot.z <- conf
     
     output$FxnPlotaDesc <- renderText({
-      paste(h4("Currently viewing row "))
+      paste(h4("Currently viewing timepoint "))
     })
     
     output$FxnbPlotDesc <- renderText({
@@ -355,9 +382,14 @@ server <- function(input,output, session) {
     show("q_F1")
     show("q11_F1")
     show("Plotly_Fxna")
+    show("plot1_FxnCheck")
     updateSelectInput(session, "x_F1", choices = seq(from=1, to = dim(X)[1], by=1), selected=1)
     updateSelectInput(session, "q_F1", choices=plot.cmp, selected = plot.cmp[1])
     updateSelectInput(session, "q11_F1", choices=plot.cmp, selected = plot.cmp[1])
+    updateSliderInput(session, "plot1_FxnCheck", min=1, max=length(plot.cmp), value=1)
+    output$Blank2 <- renderText({
+      paste(h4(strong((paste("1-1")))))
+    })
     output$Plotly_Fxna <- renderPlotly({
       plot_ly(z = ~X) %>% add_surface() %>% layout(scene = list(
         xaxis = list(title="Functional Domain",
@@ -384,25 +416,47 @@ server <- function(input,output, session) {
   
   output$Plotly_Fxnb <- renderPlotly({
     plot_ly(y=~plot.listF1()[[1]], x=~plot.listF1()[[2]], z=~t(Re(plot.listF1()[[3]][,"1-1",])))  %>%layout(scene = list( 
-           xaxis = list(title='Frequency',range = c(0, 0.5)), 
+           xaxis = list(title='Frequency',range = c(0.5, 0)), 
            yaxis = list(title="Time"), 
            zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
   })
+  observeEvent(input$plot1_FxnCheck, ignoreNULL = TRUE, {
+    curr_num <- as.numeric(input$plot1_FxnCheck)
+    if(is.na(plot.listF1()[[4]])){
+      
+    } else {
+      curr_comp <- plot.listF1()[[5]][curr_num]
+      output$Blank2 <- renderText({
+        paste(h4(strong((paste(curr_comp)))))
+      })
+      output$Fxn_Plotb <- renderPlot({
+        image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
+                   axes = TRUE, col = inferno(256), 
+                   main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i"); 
+        
+    })
+    }
+    
+  })
+  
   observeEvent(input$Fxn_Row, ignoreNULL = TRUE, {
     if(input$Fxn_Row == 'No'){
       hide("Plotly_Fxna.5")
+      hide("x11_F1")
+      hide("FxnPlot11Desc")
     } else {
       show("Plotly_Fxna.5")
-      output$Plotly_Fxna.5 <- renderPlot({
-        ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][1,])), y=plot.listF1()[[6]][1,])) + 
-          xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-          scale_x_continuous(limits=c(0,1), expand=c(0,0))
-      })
       show("x11_F1")
-      output$FxnPlot11Desc <- renderText({
-        paste(h4("Currently viewing row "))
-      })
       updateSelectInput(session, "x11_F1", choices = seq(from=1, to = dim(plot.listF1()[[6]])[1], by=1), selected=1)
+      show("FxnPlot11Desc")
+      output$Plotly_Fxna.5 <- renderPlot({
+        ggplot() + geom_line(aes(x=seq(from=1, to=as.numeric(input$RF1), length.out=length(plot.listF1()[[6]][1,])), y=plot.listF1()[[6]][1,])) + 
+          xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) 
+      })
+      output$FxnPlot11Desc <- renderText({
+        paste(h4("Currently viewing timepoint "))
+      })
+      
     }
   })
  
@@ -446,7 +500,8 @@ server <- function(input,output, session) {
       hide("UniVarDis")
       show("NotUniVar")
       output$NotUniVar <- renderText({
-        paste(strong("Choose what type of time series this is"))
+        paste(strong("This time series has multiple components. Choose what type of 
+                     time series this is. "))
       })
       show("Data_Checker")
       hide("T_len")
@@ -603,9 +658,8 @@ server <- function(input,output, session) {
       
     } else {
       output$Fxn_Plota <- renderPlotly({
-        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
-          xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-          scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        a <- ggplot() + geom_line(aes(x=seq(from=1, to=as.numeric(input$RF1), length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
+          xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5))
         ggplotly(a)
       })
     }
