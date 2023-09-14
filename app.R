@@ -29,14 +29,14 @@ ui <- fluidPage(
   tags$p(tags$em("Research reported in this publication was supported by the National Institute of General Medical Sciences 
          of the National Institutes of Health under Award Number R01GM140476. The content is solely the responsibility
          of the authors and does not necessarily represent the official views of the National Institutes of Health")),
-  tags$p(tags$strong("Authors: Dylan Ward, Kevin Gunalan Antony Michael Raj")), (tags$em(tags$u("Under the guidance of Professor Scott Bruce"))),
+  tags$p(tags$strong("Authors: Dylan Ward, Mohit Chhaparia, Kevin Gunalan Antony Michael Raj")), (tags$em(tags$u("Under the guidance of Professor Scott Bruce"))),
   tags$hr(),
   sidebarLayout(
     sidebarPanel(
       conditionalPanel(condition = "input.tabselected==1",
                        radioButtons("type", "Time Series Type", 
                                     choices=c("Univariate","Functional", "Multivariate"), 
-                                    selected="Univariate"), 
+                                    selected="Univariate"),
                        conditionalPanel(condition = "input.type == 'Univariate'", 
                        selectInput("Simsetting", "Simulation Setting",
                                    c("White Noise" = "W",
@@ -56,7 +56,10 @@ ui <- fluidPage(
                       htmlOutput("Res"),
                       htmlOutput("Res1"),
                       ), 
-                      conditionalPanel(condition = "input.type== 'Functional'", 
+                      conditionalPanel(condition = "input.type== 'Functional'",
+                      radioButtons("Plot3D", "3D Plots", 
+                                    choices=c("Include","Exclude"), 
+                                    selected="Include"), 
                       selectInput("SimF1", "Simulation Setting",
                                   c("White Noise" = "W",
                                   "Linear" = "L",
@@ -120,11 +123,11 @@ ui <- fluidPage(
                   tabPanel("File Upload", value = 2)),
       conditionalPanel(condition = "input.tabselected==1",
                        conditionalPanel(condition = "input.type == 'Univariate'",
-                       plotOutput("Image_Plot", height=1000),
+                       plotOutput("Image_Plot", height=1000, width=945),
                        radioButtons(inputId = "downloadType", label = "Select download type", choices = list("png","pdf")),
                        downloadButton('downloadData','Download the plot') ),
                        conditionalPanel(condition = "input.type == 'Functional'",
-                       plotlyOutput("Fxn_Plota", height=400),
+                       plotlyOutput("Fxn_Plota", height=400, width=900),
                        splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                          cellWidths = c( "20%", "25%", "20%"),htmlOutput("FxnPlotaDesc"), 
                                     hidden(htmlOutput("test12121")),
@@ -135,7 +138,7 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                        
-                       plotOutput("Fxn_Plotb", height=600), 
+                       plotOutput("Fxn_Plotb", height=600, width=900), 
                        splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                    cellWidths = c("20%", "25%", "20%"), 
                                    htmlOutput("FxnbPlotDesc"), 
@@ -146,7 +149,8 @@ ui <- fluidPage(
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                       plotlyOutput("Plotly_Fxna", height=600),
+                       conditionalPanel(condition = "input.Plot3D == 'Include'",
+                       plotlyOutput("Plotly_Fxna", height=600, width=875),
                        # splitLayout(cellWidths = c("80%", "20%"),
                        #             (plotlyOutput("Plotly_Fxna", height=600)), 
                        #             verticalLayout(plotOutput("Blank12121", height = 150), 
@@ -159,14 +163,14 @@ ui <- fluidPage(
                        #             cellWidths = c( "20%", "20%", "30%"),htmlOutput("FxnPlot11Desc"), 
                        #             hidden(selectInput(inputId = "x11_F1", label=NULL, choices = NULL, selected = NULL)), 
                        #             htmlOutput("test00")),
-                       plotlyOutput("Plotly_Fxnb", height=600), 
+                       plotlyOutput("Plotly_Fxnb", height=600, width=875), 
                        splitLayout(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                    cellWidths = c("20%", "25%", "20%"), 
                                    htmlOutput("FxnPlot22Desc"), 
                                    hidden(htmlOutput("Blank10100")),
                                    hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)),
                                   )
-      )),
+      ))),
       conditionalPanel(condition = "input.tabselected==2",
                        plotOutput("Image_Plota", height=400),
                        plotOutput("Image_Plot2", height=600), 
