@@ -48,6 +48,7 @@ ebaout.bL$part.final; #three bands estimated
 ebaout.bS$part.final; #three bands estimated
 
 ##Check p-values for each tested partition point
+
 ebaout.wn$log;
 #first partition point tested insignificant, so algorithm stopped
 
@@ -71,6 +72,7 @@ image.plot(x=ebaout.bS$mtspec$t,y=ebaout.bS$mtspec$f,z=t(ebaout.bS$mtspec$mtspec
            axes = TRUE, col = inferno(256), zlim=c(0,10), 
            xlab='Time',ylab='Hz',xaxs="i"); 
 abline(h=ebaout.bS$part.final[c(-1,-length(ebaout.bS$part.final))],col='green');
+
 mtext("Multitaper Spectrogram for White Noise(top) Linear(middle) and Sinusoidal(bottom)", outer = TRUE, cex = 1);
 
 ##Check p-values for flat spectrum for each segment
@@ -83,3 +85,4 @@ ebaout.bL$flat
 
 ebaout.bS$flat 
 #p-values for all frequency bands reject flat spectrum hypothesis
+
