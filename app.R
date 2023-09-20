@@ -144,11 +144,13 @@ ui <- fluidPage(
                        conditionalPanel(condition = "input.type == 'Univariate'",
                        plotOutput("Image_Plot", height=1000, width=945),
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni", height = 500)), 
-                         column(width = 7, plotOutput("summ_pval_uni", height = 500)), 
+                         column(width = 6, plotOutput("summ_out_uni", height = 500)), 
+                         column(width = 6, plotOutput("summ_pval_uni", height = 500, width = 500)), 
                          #column(width = 4, dataTableOutput("summ_flat_uni"))
                        ),
-                       downloadButton('downloadData','Download the Above Results') , 
+                       downloadButton('downloadData','Download the Above Results') ,
+                       br(),
+                       br(),
                        ),
                        
                        conditionalPanel(condition = "input.type == 'Functional'",
@@ -185,14 +187,16 @@ ui <- fluidPage(
                        )
       )),
       conditionalPanel(condition = "input.tabselected==2",
-                       plotOutput("Image_Plota", height=400, width=800),
-                       plotOutput("Image_Plot2", height=600, width=800), 
+                       plotOutput("Image_Plota", height=400, width=945),
+                       plotOutput("Image_Plot2", height=600, width=945), 
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni_file", height = 500)), 
-                         column(width = 7, plotOutput("summ_pval_uni_file", height = 500)), 
+                         column(width = 6, plotOutput("summ_out_uni_file", height = 500)), 
+                         column(width = 6, plotOutput("summ_pval_uni_file", height = 500, width = 500)), 
                          #column(width = 4, dataTableOutput("summ_flat_uni"))
                        ),
-                       downloadButton('downloadData1','Download the Above Results'), 
+                       downloadButton('downloadData1','Download the Above Results'),
+                       br(),
+                       br(),
                        conditionalPanel(condition = "input.Data_Checker== 'Functional'", 
                                         plotlyOutput("Test_Fxna_Plot1", width=875), 
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
@@ -939,7 +943,7 @@ server <- function(input,output, session) {
       f_part <- c(1, floor(T_B/2 + 1))
       flo_mea <- floor(mean(f_part))
       max_tap <- ((flo_mea - 1) * ((T_B+1)/T_B)) - 1
-      mmm <- abs(diff(f.part))
+      mmm <- abs(diff(f_part))
       output$res10 <- renderText({
         paste(h6("**Valid choices range from 1 to ", (i-1), "as we need to satisfy ", HTML(paste(tags$sup("floor(N/2)"))), 
                  "/", HTML(paste(tags$sub(2))), " - 1> floor((K+1)(", HTML(paste(tags$sup("N"))), 
