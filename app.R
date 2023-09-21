@@ -142,9 +142,9 @@ ui <- fluidPage(
                   tabPanel("File Upload", value = 2)),
       conditionalPanel(condition = "input.tabselected==1",
                        conditionalPanel(condition = "input.type == 'Univariate'",
-                       plotOutput("Image_Plot", height=1000, width=945),
+                       plotOutput("Image_Plot", height=1000, width=1000),
                        fluidRow(
-                         column(width = 6, plotOutput("summ_out_uni", height = 500)), 
+                         column(width = 6, plotOutput("summ_out_uni", height = 500, width=500)), 
                          column(width = 6, plotOutput("summ_pval_uni", height = 500, width = 500)), 
                          #column(width = 4, dataTableOutput("summ_flat_uni"))
                        ),
@@ -154,7 +154,7 @@ ui <- fluidPage(
                        ),
                        
                        conditionalPanel(condition = "input.type == 'Functional'",
-                       plotlyOutput("Fxn_Plota", height=400, width=900),
+                       plotlyOutput("Fxn_Plota", height=400, width=1000),
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("FxnPlotaDesc") ),
                                 column(width=4, hidden(htmlOutput("test12121"))),
@@ -166,7 +166,7 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                        
-                       plotOutput("Fxn_Plotb", height=600, width = 900), 
+                       plotOutput("Fxn_Plotb", height=600, width = 1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("FxnbPlotDesc") ),
                                 column(width=4, htmlOutput("Blank2")),
@@ -176,8 +176,8 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                        conditionalPanel(condition = "input.Plot3D == 'Include'",
-                       plotlyOutput("Plotly_Fxna", height=600, width=875),
-                       plotlyOutput("Plotly_Fxnb", height=600, width=875), 
+                       plotlyOutput("Plotly_Fxna", height=600, width=1000),
+                       plotlyOutput("Plotly_Fxnb", height=600, width=1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("FxnPlot22Desc") ),
                                 column(width=4, htmlOutput("Blank10100")),
@@ -187,10 +187,10 @@ ui <- fluidPage(
                        )
       )),
       conditionalPanel(condition = "input.tabselected==2",
-                       plotOutput("Image_Plota", height=400, width=945),
-                       plotOutput("Image_Plot2", height=600, width=945), 
+                       plotOutput("Image_Plota", height=400, width=1000),
+                       plotOutput("Image_Plot2", height=600, width=1000), 
                        fluidRow(
-                         column(width = 6, plotOutput("summ_out_uni_file", height = 500)), 
+                         column(width = 6, plotOutput("summ_out_uni_file", height = 500, width=500)), 
                          column(width = 6, plotOutput("summ_pval_uni_file", height = 500, width = 500)), 
                          #column(width = 4, dataTableOutput("summ_flat_uni"))
                        ),
@@ -198,7 +198,7 @@ ui <- fluidPage(
                        br(),
                        br(),
                        conditionalPanel(condition = "input.Data_Checker== 'Functional'", 
-                                        plotlyOutput("Test_Fxna_Plot1", width=875), 
+                                        plotlyOutput("Test_Fxna_Plot1", width=1000), 
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                           column(width=6,  htmlOutput("FxnPlotaDesc_AA") ),
                                           column(width=4, htmlOutput("test12121_AA")),
@@ -207,7 +207,7 @@ ui <- fluidPage(
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                                        plotOutput("Fxn_Plotb_file", height=600, width=875), 
+                                        plotOutput("Fxn_Plotb_file", height=600, width=1000), 
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  column(width=6,  htmlOutput("FxnbPlotDesc_file") ),
                                                  column(width=4, htmlOutput("Blank2_file")),
@@ -217,8 +217,8 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                                         conditionalPanel(condition = "input.Plot3D_File == 'Include'",
-                                        plotlyOutput("Plotly_Fxna_file", height=600, width=875),
-                                        plotlyOutput("Plotly_Fxnb_file", height=600, width=875), 
+                                        plotlyOutput("Plotly_Fxna_file", height=600, width=1000),
+                                        plotlyOutput("Plotly_Fxnb_file", height=600, width=1000), 
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  column(width=6,  htmlOutput("FxnPlot22Desc_file") ),
                                                  column(width=4, htmlOutput("Blank10100_file")),
@@ -556,15 +556,12 @@ server <- function(input,output, session) {
       paste(h4(strong((paste("1")))))
     })
     output$Plotly_Fxna <- renderPlotly({
-      plot_ly(z = ~X) %>% add_surface() %>% layout(
+      plot_ly(x = ~seq(from=0, to=1, length.out = ncol(X)), 
+              y = ~seq(from=1, to=nrow(X)), 
+              z = ~X) %>% add_surface() %>% layout(
         title = "3D Representation of Simulated Data",
         scene = list(
-        xaxis = list(title="Functional Domain",
-                     range = c(0, as.numeric(input$RF1) + 0.5),
-                     ticktext = round(seq(from=0, to=1, length=as.numeric(input$RF1)), 3), 
-                     tickvals = (seq(0, as.numeric(input$RF1) - 1)), 
-                     tickmode = "array"
-                     ), 
+        xaxis = list(title="Functional Domain"), 
         yaxis = list(title = "Timepoint"), 
         zaxis = list(title="Value")
       )) %>% colorbar(title = "Value", len=1)
@@ -1091,14 +1088,12 @@ server <- function(input,output, session) {
       paste(h4(strong((paste("1")))))
     })
     output$Plotly_Fxna_file <- renderPlotly({
-      plot_ly(z = ~dataf) %>% add_surface() %>% layout(
+      plot_ly(x = ~seq(from=0, to = 1, length.out=ncol(dataf)),
+              y = ~seq(from=1, to=nrow(dataf)), 
+              z = ~dataf) %>% add_surface() %>% layout(
         title = "3D Representation of Simulated Data",
         scene = list(
-          xaxis = list(title="Functional Domain",
-                       range = c(0, as.numeric(ncol) + 0.5),
-                       ticktext = round(seq(from=0, to=1, length=as.numeric(ncol)), 3), 
-                       tickvals = (seq(0, as.numeric(ncol) - 1)), 
-                       tickmode = "array"), 
+          xaxis = list(title="Functional Domain"), 
            yaxis = list(title = "Timepoint"), 
            zaxis = list(title="Value")
          )) %>% colorbar(title = "Value", len=1)
