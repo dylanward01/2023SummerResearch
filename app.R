@@ -78,7 +78,7 @@ ui <- fluidPage(
                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
                       radioButtons(inputId = "TF_F1", label = "Standardize", 
                                    c("True" = TRUE, "False" = FALSE), selected = FALSE),
-                      actionButton("goF1", label = "Run"),
+                      actionButton("goF1", label = "Run \n (Warning: The Algorithm will take a while to run)"),
                       htmlOutput("F1_1"),
                       htmlOutput("F1_2"),
                       htmlOutput("F1_3")
@@ -184,7 +184,15 @@ ui <- fluidPage(
                                 column(width=2, hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
                        
-                       )
+                       ), 
+                       fluidRow(
+                         column(width = 6, plotOutput("summ_out_fxn", height = 500, width=500)), 
+                         column(width = 6, plotOutput("summ_pval_fxn", height = 500, width = 500)), 
+                         #column(width = 4, dataTableOutput("summ_flat_uni"))
+                       ), 
+                       downloadButton('downloadDataFXN1','Download the Above Results'),
+                       br(),
+                       br()
       )),
       conditionalPanel(condition = "input.tabselected==2",
                        plotOutput("Image_Plota", height=400, width=1000),
@@ -463,7 +471,7 @@ server <- function(input,output, session) {
     N=as.numeric(input$NF1); #number of observations per time block
     bw=floor((as.numeric(input$KF1) + 1) / (as.numeric(input$NF1) + 1)); #bandwidth for multitaper spectral estimator
     K=as.numeric(input$KF1); #number of tapers for multitaper spectral estimator
-    std=as.numeric(input$TF_F1); #standardize variance for points in functional domain (TRUE) or not (FALSE)
+    std=as.logical(input$TF_F1); #standardize variance for points in functional domain (TRUE) or not (FALSE)
     freq=seq(from=0,by=1/N,length.out=floor(N/2)+1); #Fourier frequencies
     Rsel=as.numeric(input$RselF1); #number of points in functional domain used for test statistics
     
@@ -498,6 +506,23 @@ server <- function(input,output, session) {
        plot.main <- "Multitaper Autospectrum"; plot.data = X
        
     }
+    set.seed(47)
+    ndraw=100000; #number of draws from Gaussian process for approximating p-values
+    blockdiag=TRUE; #use block diagonal covariance matrix approximation
+    dcap=40; #max number of frequencies tested in a given pass 
+    alpha=as.numeric(input$AlphaF1)/ceiling((1-2*bw/0.5)*(floor(N/2)+1)/dcap); #alpha with Bonferroni correction
+    
+    res <- fEBA.wrapper(X,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap);
+    ##View test statistics and p-values over frequencies
+    tmp=cbind(as.numeric(unlist(lapply(res$log, function(x) rownames(x$Qint)))),
+              unlist(lapply(res$log, function(x) x$Qint)),
+              unlist(lapply(res$log, function(x) x$Qpv[,'Qint'])));
+    tmp=tmp[!duplicated(tmp[,1]),];
+    #plot(tmp[,1],tmp[,2],
+    #     type="l",xlab='Hz',ylab='Qint');
+    #plot(tmp[,1],tmp[,3],
+    #     type="l",xlab='Hz',ylab='p-value',ylim=c(0,1));
+    
     output$Fxn_Plota <- renderPlotly({
          a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
            xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
@@ -572,14 +597,84 @@ server <- function(input,output, session) {
     plot.main_3D.2 <- "3D Representation of Coherence"
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
         plot.main = plot.main, plot.cmp = plot.cmp, plot.data = plot.data, 
-        plot.main_2 = plot.main_2, plot.main_3D = plot.main_3D, plot.main_3D.2 = plot.main_3D.2)
+        plot.main_2 = plot.main_2, plot.main_3D = plot.main_3D, plot.main_3D.2 = plot.main_3D.2, 
+        plot.log = res$summary, plot.freq = unname(tmp[,1]), plot.pvals = unname(tmp[,3]))
     
   });
-  
+  output$summ_out_fxn <- renderPlot({
+    freq <- round(plot.listF1()[[10]][,1], 3)
+    pval <- round(plot.listF1()[[10]][,2], 5)
+    thresh <- round(plot.listF1()[[10]][,3], 5)
+    Sig <- character(length(pval))
+    for(i in 1:length(Sig)){
+      if(pval[i] < thresh[i]){
+        Sig[i] <- "TRUE"
+      } else {
+        Sig[i] <- "FALSE"
+      }
+    }
+    res <- data.frame("Freq" = freq, "val" = pval, "t"=thresh, "s" = as.character(Sig))
+    colnames(res) <- c("Frequency", "P-Value", "P-Value \n Threshold", "Significant")
+    res1 <- tableGrob(res, rows = NULL)
+    title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+    blank9090 <- textGrob(""); blank0909 <- textGrob("")
+    grid.arrange(blank9090, title, res1, blank0909, ncol = 1)
+  })
+  output$summ_pval_fxn <- renderPlot({
+    ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+      xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+      geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+  })
   output$Fxn_Plotb <- renderPlot({
     image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,"1-1",]))), 
                axes = TRUE, col = inferno(256), 
-               main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i"); 
+               main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
+               bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+    abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
+    abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+    vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                      just=c("left", "top"), y=0.55, x=0.65)
+    act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+    len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
+    vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
+    if(len == 0){
+      str <- "(0, 0.5),"
+    } else if (len == 1) {
+      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+    } else {
+      str <- paste("(0", sep="")
+      for(i in 1:len){
+        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      }
+      str <- paste(str, ",", "0.5),", sep="")
+    }
+    spp <- strsplit(str, "),")[[1]]
+    for(a in 1:length(spp)){
+      spp[a] <- paste(spp[a], ")", sep="")
+    }
+    max_len <- max(length(act), length(spp))
+    if(length(act) == length(spp)){
+      
+    } else if(length(act) > length(spp)){
+      sp_l <- length(spp) + 1
+      for(i in sp_l: length(act)){
+        spp[i] <- ""
+      }
+    } else {
+      ac_l <- length(act) + 1
+      for(i in ac_l: length(spp)){
+        act[i] <- ""
+      }
+    }
+    pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
+    colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
+    grid.table(pp, vp=vp.br, rows=NULL)
+    
+    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                     just=c("left", "top"), y=0.95, x=0.65)
+    grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+    jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                      draw=TRUE)
   })
   
   output$Plotly_Fxnb <- renderPlotly({
@@ -602,14 +697,106 @@ server <- function(input,output, session) {
         output$Fxn_Plotb <- renderPlot({
           image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
                      axes = TRUE, col = inferno(256), 
-                     main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i")
+                     main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
+                     bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85));
+          abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
+          abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+          vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                            just=c("left", "top"), y=0.55, x=0.65)
+          act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+          len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
+          vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
+          if(len == 0){
+            str <- "(0, 0.5),"
+          } else if (len == 1) {
+            str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+          } else {
+            str <- paste("(0", sep="")
+            for(i in 1:len){
+              str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+            }
+            str <- paste(str, ",", "0.5),", sep="")
+          }
+          spp <- strsplit(str, "),")[[1]]
+          for(a in 1:length(spp)){
+            spp[a] <- paste(spp[a], ")", sep="")
+          }
+          max_len <- max(length(act), length(spp))
+          if(length(act) == length(spp)){
+            
+          } else if(length(act) > length(spp)){
+            sp_l <- length(spp) + 1
+            for(i in sp_l: length(act)){
+              spp[i] <- ""
+            }
+          } else {
+            ac_l <- length(act) + 1
+            for(i in ac_l: length(spp)){
+              act[i] <- ""
+            }
+          }
+          pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
+          colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
+          grid.table(pp, vp=vp.br, rows=NULL)
+          
+          vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                           just=c("left", "top"), y=0.95, x=0.65)
+          grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+          jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                            draw=TRUE)
         })
           
       } else {
         output$Fxn_Plotb <- renderPlot({
           image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
                      axes = TRUE, col = inferno(256), 
-                     main = plot.listF1()[[7]],xlab='Time',ylab='Hz',xaxs="i"); 
+                     main = plot.listF1()[[7]],xlab='Time',ylab='Hz',xaxs="i",
+                     bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+          abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
+          abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+          vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                            just=c("left", "top"), y=0.55, x=0.65)
+          act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+          len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
+          vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
+          if(len == 0){
+            str <- "(0, 0.5),"
+          } else if (len == 1) {
+            str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+          } else {
+            str <- paste("(0", sep="")
+            for(i in 1:len){
+              str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+            }
+            str <- paste(str, ",", "0.5),", sep="")
+          }
+          spp <- strsplit(str, "),")[[1]]
+          for(a in 1:length(spp)){
+            spp[a] <- paste(spp[a], ")", sep="")
+          }
+          max_len <- max(length(act), length(spp))
+          if(length(act) == length(spp)){
+            
+          } else if(length(act) > length(spp)){
+            sp_l <- length(spp) + 1
+            for(i in sp_l: length(act)){
+              spp[i] <- ""
+            }
+          } else {
+            ac_l <- length(act) + 1
+            for(i in ac_l: length(spp)){
+              act[i] <- ""
+            }
+          }
+          pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
+          colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
+          grid.table(pp, vp=vp.br, rows=NULL)
+          
+          vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                           just=c("left", "top"), y=0.95, x=0.65)
+          grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+          jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                            draw=TRUE)
         })
           
       }
@@ -1647,6 +1834,115 @@ server <- function(input,output, session) {
       print(ggplot() + geom_point(aes(x = as.numeric(plot.list()[[8]][,1]), y = as.numeric(plot.list()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
               xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
               geom_vline(xintercept = plot.list()[[5]], linetype = "dashed") , vp=vp.r)
+      
+      dev.off()
+    }
+  )
+  output$downloadDataFXN1 <- downloadHandler(
+    filename = function(){
+      paste("Simulated_Output_Results","pdf",sep = ".") 
+    },
+    content = function(file){
+      pdf(file, paper = "USr", width = 1100, height=600, onefile = TRUE)
+      par(mar=c(4,4,12,12))
+      vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
+                         just=c( "bottom"), y=0.6, x=0.475)
+      #plot.new()
+      curr_num <- as.numeric(input$plot1_FxnCheck)
+      curr_comp <-plot.listF1()[[5]][curr_num]
+      if(strsplit(curr_comp, "-")[[1]][1] == strsplit(curr_comp,"-")[[1]][2]){
+        image.plot(x=plot.listF1()[[1]], y=plot.listF1()[[2]], z=t(Re(plot.listF1()[[3]][,curr_comp,])), 
+                   axes = TRUE, col = inferno(256), 
+                   xlab='Time',ylab='Hz',xaxs="i", 
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of component", curr_comp), line=0.75)
+      } else {
+        image.plot(x=plot.listF1()[[1]], y=plot.listF1()[[2]], z=t(Re(plot.listF1()[[3]][,curr_comp,])), 
+                   axes = TRUE, col = inferno(256), 
+                   xlab='Time',ylab='Hz',xaxs="i", 
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated coherence of component", curr_comp), line = 0.75)
+      }
+      abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col = "skyblue", lwd=3); 
+      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+      
+      vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
+                        just=c("left", "top"), y=0.5, x=0.65)
+      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+      len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
+      vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
+      if(len == 0){
+        str <- "(0, 0.5),"
+      } else if (len == 1) {
+        str <- paste("(0, ", round(vals, 3), "),[", round(vals, 3), ", 0.5),", sep="")
+      } else {
+        str <- paste("(0", sep="")
+        for(i in 1:len){
+          str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+        }
+        str <- paste(str, ",", "0.5),", sep="")
+      }
+      spp <- strsplit(str, "),")[[1]]
+      for(a in 1:length(spp)){
+        spp[a] <- paste(spp[a], ")", sep="")
+      }
+      max_len <- max(length(act), length(spp))
+      if(length(act) == length(spp)){
+        
+      } else if(length(act) > length(spp)){
+        sp_l <- length(spp) + 1
+        for(i in sp_l: length(act)){
+          spp[i] <- ""
+        }
+      } else {
+        ac_l <- length(act) + 1
+        for(i in ac_l: length(spp)){
+          act[i] <- ""
+        }
+      }
+      pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
+      colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
+      
+      vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
+                        just=c("left", "top"), y=0.5, x=0.63)
+      grid.table(pp, vp=vp.br, rows=NULL)
+      vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.5, "npc"), 
+                       just=c("left", "top"), y=0.65, x=0.58)
+      grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+      
+      jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                        draw=TRUE)
+      curr_row <- as.numeric(input$x_F1)
+      print( ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
+               xlab("Functional Domain") + ylab("") + ggtitle(paste("Simulated Data- Timepoint", curr_row)) + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+               scale_x_continuous(limits = c(0,1), expand=c(0,0)), vp=vp.top)
+      #plot.new()
+      vp.r <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                       y=0.5, x=0.75)
+      vp.l <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                       y=0.5, x=0.25)
+      ###
+      
+      freq <- round(plot.listF1()[[10]][,1], 3)
+      pval <- round(plot.listF1()[[10]][,2], 5)
+      thresh <- round(plot.listF1()[[10]][,3], 5)
+      Sig <- character(length(pval))
+      for(i in 1:length(Sig)){
+        if(pval[i] < thresh[i]){
+          Sig[i] <- "TRUE"
+        } else {
+          Sig[i] <- "FALSE"
+        }
+      }
+      res <- data.frame("Freq" = freq, "val" = pval, "t"=thresh, "s" = as.character(Sig))
+      colnames(res) <- c("Frequency", "P-Value", "P-Value \n Threshold", "Significant")
+      res1 <- tableGrob(res, rows = NULL)
+      title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+      blank9090 <- textGrob(""); blank0909 <- textGrob("")
+      grid.arrange(blank9090, title, res1, blank0909, ncol = 1, vp = vp.l)
+    
+      ###
+      print(ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+              xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+              geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
       
       dev.off()
     }
