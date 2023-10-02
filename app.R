@@ -623,13 +623,13 @@ server <- function(input,output, session) {
   output$summ_pval_fxn <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = (plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
   })
   output$Fxn_Plotb <- renderPlot({
     image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,"1-1",]))), 
                axes = TRUE, col = inferno(256), 
                main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
-               bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+               bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
     abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
     abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
     vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
@@ -698,7 +698,7 @@ server <- function(input,output, session) {
           image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
                      axes = TRUE, col = inferno(256), 
                      main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
-                     bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85));
+                     bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85));
           abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
           abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
           vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
@@ -751,7 +751,7 @@ server <- function(input,output, session) {
           image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
                      axes = TRUE, col = inferno(256), 
                      main = plot.listF1()[[7]],xlab='Time',ylab='Hz',xaxs="i",
-                     bigplot = c(.05, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+                     bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
           abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
           abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
           vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
