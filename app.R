@@ -86,7 +86,7 @@ ui <- fluidPage(
                       htmlOutput("F1_3")
                       ),
                       conditionalPanel(condition="input.type == 'Multivariate'",
-                                       radioButtons("Plot3D", "3D Plots", 
+                                       radioButtons("Plot3DM", "3D Plots", 
                                                     choices=c("Include","Exclude"), 
                                                     selected="Include"),
                       selectInput("SimSettingM", "Simulation Setting",
@@ -99,6 +99,10 @@ ui <- fluidPage(
                                   choices = c( 200, 500, 1000, 2000, 5000), selected=200), 
                       selectInput(inputId = "RMv", label = "Choose the number of components (R)", 
                                   choices=seq(from=5, to=50, by=5), selected=10),
+                      selectInput(inputId = "nrepMv", label="Choose the number of repetitions (nrep)",
+                                  choices=c(100,500,1000,2000), selected=1000),
+                      selectInput(inputId = "WselMv", label="Choose the number of different neighborhood pairings to test (Wsel)",
+                                  choices=c(1,2,3,4,5), selected=3),
                       actionButton("goMv", label = "Run"),
                       htmlOutput("Check111"),
                       )),
@@ -161,8 +165,7 @@ ui <- fluidPage(
                        plotOutput("Image_Plot", height=1000, width=1000),
                        fluidRow(
                          column(width = 5, plotOutput("summ_out_uni", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_uni", height = 500, width = 500)), 
-                         #column(width = 4, dataTableOutput("summ_flat_uni"))
+                         column(width = 5, plotOutput("summ_pval_uni", height = 500, width = 500))
                        ),
                        downloadButton('downloadData','Download the Above Results') ,
                        br(),
@@ -195,7 +198,7 @@ ui <- fluidPage(
                        plotlyOutput("Plotly_Fxna", height=600, width=1000),
                        plotlyOutput("Plotly_Fxnb", height=600, width=1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
-                                column(width=6,  htmlOutput("FxnPlot22Desc") ),
+                                column(width=6, htmlOutput("FxnPlot22Desc") ),
                                 column(width=4, htmlOutput("Blank10100")),
                                 column(width=2, hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
@@ -203,8 +206,7 @@ ui <- fluidPage(
                        ), 
                        fluidRow(
                          column(width = 5, plotOutput("summ_out_fxn", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_fxn", height = 500, width = 500)), 
-                         #column(width = 4, dataTableOutput("summ_flat_uni"))
+                         column(width = 5, plotOutput("summ_pval_fxn", height = 500, width = 500))
                        ), 
                        downloadButton('downloadDataFXN1','Download the Above Results'),
                        br(),
@@ -213,6 +215,35 @@ ui <- fluidPage(
                        
                        conditionalPanel(condition = "input.type == 'Multivariate'",
                        plotlyOutput("Mv_Plota", height=400, width=1000),
+                       fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                column(width=6,  htmlOutput("MvPlotaDesc") ),
+                                column(width=4, hidden(htmlOutput("mv_testa"))),
+                                column(width=2, hidden(sliderInput(inputId = "mvX_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
+                       ),
+                       tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
+                                                 visibility: hidden !important;
+                                                 }' ))),
+                       
+                       plotOutput("Mv_Plotb", height=600, width = 1000), 
+                       fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                column(width=6,  htmlOutput("MvbPlotDesc") ),
+                                column(width=4, htmlOutput("mv_testb")),
+                                column(width=2, hidden(sliderInput("mvX_F2",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
+                       ),
+                       conditionalPanel(condition = "input.Plot3DM == 'Include'",
+                       plotlyOutput("Plotly_Mva", height=600, width=1000),
+                       plotlyOutput("Plotly_Mvb", height=600, width=1000), 
+                       fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                column(width=6,  htmlOutput("MvPlot22Desc") ),
+                                column(width=4, htmlOutput("Mv_10100")),
+                                column(width=2, hidden(sliderInput(inputId = "q11_Mv1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
+                       )
+                       ),
+                       fluidRow(
+                         column(width = 5, plotOutput("summ_out_Mv", height = 500, width=500)), 
+                         column(width = 5, plotOutput("summ_pval_Mv", height = 500, width = 500))
+                       ), 
+                       
                        br()
       )),
       conditionalPanel(condition = "input.tabselected==2",
@@ -497,9 +528,13 @@ server <- function(input,output, session) {
   # Note: Later change idx to vary from 1 to R.
   
   plot.listMv <- eventReactive(input$goMv, ignoreNULL = TRUE, {
+    source("mEBA_Rfunctions.R")
+    Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
     print('Assign')
     t = as.numeric(input$TsMv); #Length of Time Series
     R = as.numeric(input$RMv); #Number of Components
+    nrep = as.numeric(input$nrepMv)
+    Wsel = as.numeric(input$WselMv)
     seed=234; #seed for reproducibility
     
     ##################################################################
@@ -514,7 +549,6 @@ server <- function(input,output, session) {
       }
       
       #plot series 
-      plot.ts(X.wn,main="White Noise")
       
       #compute and plot local periodogram and demeaned local periodogram
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
@@ -522,46 +556,12 @@ server <- function(input,output, session) {
       pse <- fhat(X.wn,N,stdz=FALSE);
       gpse <- ghat(pse);
       
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(gpse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Demeaned Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      #run algorithm and store results
-      wn1b.out=msboot(nrep=1000, X.wn, Wsel=3, stdz=FALSE, ncore=1)
+      b.out=msboot(nrep=nrep, X.wn, Wsel=Wsel, stdz=FALSE, ncore=1)
       
       #plot output
       #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      par(mfrow=c(3,1))
-      plot(wn1b.out[[2]][[1]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W1',ylim=c(0,6))
-      apply(wn1b.out[[2]][[1]][,3:50],2,function(x) lines(cbind(wn1b.out[[2]][[1]][,1],x)))
-      lines(wn1b.out[[1]][[1]],col='red',lwd=2)
-      
-      plot(wn1b.out[[2]][[2]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W2',ylim=c(0,6))
-      apply(wn1b.out[[2]][[2]][,3:50],2,function(x) lines(cbind(wn1b.out[[2]][[2]][,1],x)))
-      lines(wn1b.out[[1]][[2]],col='red',lwd=2)
-      
-      plot(wn1b.out[[2]][[3]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W3',ylim=c(0,6))
-      apply(wn1b.out[[2]][[3]][,3:50],2,function(x) lines(cbind(wn1b.out[[2]][[3]][,1],x)))
-      lines(wn1b.out[[1]][[3]],col='red',lwd=2)
-      
-      #plot of p-values for testing each frequency as a partition point (black) and 0.05 threshold (red) for each W
-      par(mfrow=c(3,1))
-      plot(wn1b.out[[3]][[1]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(wn1b.out[[3]][[2]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(wn1b.out[[3]][[3]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
       
       #table of significant frequency partition points (none in the white noise case)
-      wn1b.out[[4]][which(wn1b.out[[4]][,2]==1),1]
       X = X.wn
     }
     
@@ -585,64 +585,15 @@ server <- function(input,output, session) {
         X.s3b[,m] <- cf[m]*df$bS[(101+ll[m]):(t+100+ll[m])]
       }
 
-      #plot series 
-      plot.ts(X.s3b,main="Sinusoidal 3 Bands")
-      
       #compute and plot local periodogram and demeaned local periodogram
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.s3b,N,stdz=FALSE);
       gpse <- ghat(pse);
       
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(gpse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Demeaned Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-
-      #run algorithm and store results
-      s3b.out=msboot(nrep=1000, X.s3b, Wsel=3, stdz=FALSE, ncore=1)
-
-      #plot output
-      #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      par(mfrow=c(3,1))
-      plot(s3b.out[[2]][[1]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W1',ylim=c(0,200000))
-      apply(s3b.out[[2]][[1]][,3:50],2,function(x) lines(cbind(s3b.out[[2]][[1]][,1],x)))
-      lines(s3b.out[[1]][[1]],col='red',lwd=2)
-      
-      plot(s3b.out[[2]][[2]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W2',ylim=c(0,200000))
-      apply(s3b.out[[2]][[2]][,3:50],2,function(x) lines(cbind(s3b.out[[2]][[2]][,1],x)))
-      lines(s3b.out[[1]][[2]],col='red',lwd=2)
-      
-      plot(s3b.out[[2]][[3]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W3',ylim=c(0,200000))
-      apply(s3b.out[[2]][[3]][,3:50],2,function(x) lines(cbind(s3b.out[[2]][[3]][,1],x)))
-      lines(s3b.out[[1]][[3]],col='red',lwd=2)
-
-      #plot of p-values for testing each frequency as a partition point (black) and 0.05 threshold (red) for each W
-      par(mfrow=c(3,1))
-      plot(s3b.out[[3]][[1]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(s3b.out[[3]][[2]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(s3b.out[[3]][[3]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
+      b.out=msboot(nrep=nrep, X.s3b, Wsel=Wsel, stdz=FALSE, ncore=1)
 
       #table of significant frequency partition points (none in the white noise case)
-      s3b.out[[4]][which(s3b.out[[4]][,2]==1),1]
-      
-      
-      #local periodogram with estimated cutpoints
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      abline(h=s3b.out[[4]][which(s3b.out[[4]][,2]==1),1],col='green',lwd=2);
       X = X.s3b;
     }
     
@@ -665,64 +616,14 @@ server <- function(input,output, session) {
         X.l3b[,m] <- cf[m]*df$bL[(101+ll[m]):(t+100+ll[m])]
       }
       
-      #plot series 
-      plot.ts(X.l3b,main="Linear 3 Band")
-      
       #compute and plot local periodogram and demeaned local periodogram
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.l3b,N,stdz=FALSE);
       gpse <- ghat(pse);
       
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
+      b.out=msboot(nrep=nrep, X.l3b, Wsel=Wsel, stdz=FALSE, ncore=1)
       
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(gpse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Demeaned Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      #run algorithm and store results
-      l3b.out=msboot(nrep=1000, X.l3b, Wsel=3, stdz=FALSE, ncore=1)
-      
-      #plot output
-      #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      par(mfrow=c(3,1))
-      plot(l3b.out[[2]][[1]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W1',ylim=c(0,3000))
-      apply(l3b.out[[2]][[1]][,3:50],2,function(x) lines(cbind(l3b.out[[2]][[1]][,1],x)))
-      lines(l3b.out[[1]][[1]],col='red',lwd=2)
-      
-      plot(l3b.out[[2]][[2]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W2',ylim=c(0,3000))
-      apply(l3b.out[[2]][[2]][,3:50],2,function(x) lines(cbind(l3b.out[[2]][[2]][,1],x)))
-      lines(l3b.out[[1]][[2]],col='red',lwd=2)
-      
-      plot(l3b.out[[2]][[3]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W3',ylim=c(0,3000))
-      apply(l3b.out[[2]][[3]][,3:50],2,function(x) lines(cbind(l3b.out[[2]][[3]][,1],x)))
-      lines(l3b.out[[1]][[3]],col='red',lwd=2)
-      
-      #plot of p-values for testing each frequency as a partition point (black) and 0.05 threshold (red) for each W
-      par(mfrow=c(3,1))
-      plot(l3b.out[[3]][[1]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(l3b.out[[3]][[2]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(l3b.out[[3]][[3]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      
-      #table of significant frequency partition points (none in the white noise case)
-      l3b.out[[4]][which(l3b.out[[4]][,2]==1),1]
-      
-      
-      #local periodogram with estimated cutpoints
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      abline(h=l3b.out[[4]][which(l3b.out[[4]][,2]==1),1],col='green',lwd=2);
       X = X.l3b;
     }
     
@@ -749,65 +650,14 @@ server <- function(input,output, session) {
       for (m in (floor(R/2)+1):R){
         X.m3b1[,m] <- cf[m]*df$bS[(101+ll[m]):(t+100+ll[m])]
       }
-      
-      #plot series 
-      plot.ts(X.m3b1,main="Mixture 3 Bands")
-      
       #compute and plot local periodogram and demeaned local periodogram
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b1,N,stdz=FALSE);
       gpse <- ghat(pse);
       
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
+      b.out=msboot(nrep=nrep, X.m3b1, Wsel=Wsel, stdz=FALSE, ncore=1)
       
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(gpse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Demeaned Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      #run algorithm and store results
-      m3b1.out=msboot(nrep=1000, X.m3b1, Wsel=3, stdz=FALSE, ncore=1)
-      
-      #plot output
-      #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      par(mfrow=c(3,1))
-      plot(m3b1.out[[2]][[1]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W1',ylim=c(0,50000))
-      apply(m3b1.out[[2]][[1]][,3:50],2,function(x) lines(cbind(m3b1.out[[2]][[1]][,1],x)))
-      lines(m3b1.out[[1]][[1]],col='red',lwd=2)
-      
-      plot(m3b1.out[[2]][[2]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W2',ylim=c(0,50000))
-      apply(m3b1.out[[2]][[2]][,3:50],2,function(x) lines(cbind(m3b1.out[[2]][[2]][,1],x)))
-      lines(m3b1.out[[1]][[2]],col='red',lwd=2)
-      
-      plot(m3b1.out[[2]][[3]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W3',ylim=c(0,50000))
-      apply(m3b1.out[[2]][[3]][,3:50],2,function(x) lines(cbind(m3b1.out[[2]][[3]][,1],x)))
-      lines(m3b1.out[[1]][[3]],col='red',lwd=2)
-      
-      #plot of p-values for testing each frequency as a partition point (black) and 0.05 threshold (red) for each W
-      par(mfrow=c(3,1))
-      plot(m3b1.out[[3]][[1]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(m3b1.out[[3]][[2]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(m3b1.out[[3]][[3]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      
-      #table of significant frequency partition points (none in the white noise case)
-      m3b1.out[[4]][which(m3b1.out[[4]][,2]==1),1]
-      
-      
-      #local periodogram with estimated cutpoints
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      abline(h=m3b1.out[[4]][which(m3b1.out[[4]][,2]==1),1],col='green',lwd=2);
       X = X.m3b1;
       
       
@@ -838,64 +688,14 @@ server <- function(input,output, session) {
         X.m3b2[,m] <- cf[m]*df$bS2f35[(101+ll[m]):(t+100+ll[m])]
       }
       
-      #plot series 
-      plot.ts(X.m3b2,main="Differing Proportions 3 Bands")
-      
       #compute and plot local periodogram and demeaned local periodogram
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b2,N,stdz=FALSE);
       gpse <- ghat(pse);
       
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
+      b.out=msboot(nrep=nrep, X.m3b2, Wsel=Wsel, stdz=FALSE, ncore=1)
       
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(gpse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Demeaned Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      
-      #run algorithm and store results
-      m3b2.out=msboot(nrep=1000, X.m3b2, Wsel=3, stdz=FALSE, ncore=1)
-      
-      #plot output
-      #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      par(mfrow=c(3,1))
-      plot(m3b2.out[[2]][[1]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W1',ylim=c(0,90000))
-      apply(m3b2.out[[2]][[1]][,3:50],2,function(x) lines(cbind(m3b2.out[[2]][[1]][,1],x)))
-      lines(m3b2.out[[1]][[1]],col='red',lwd=2)
-      
-      plot(m3b2.out[[2]][[2]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W2',ylim=c(0,90000))
-      apply(m3b2.out[[2]][[2]][,3:50],2,function(x) lines(cbind(m3b2.out[[2]][[2]][,1],x)))
-      lines(m3b2.out[[1]][[2]],col='red',lwd=2)
-      
-      plot(m3b2.out[[2]][[3]][,1:2],type='l',xlab='Frequency',ylab='D(omega)',main='W3',ylim=c(0,90000))
-      apply(m3b2.out[[2]][[3]][,3:50],2,function(x) lines(cbind(m3b2.out[[2]][[3]][,1],x)))
-      lines(m3b2.out[[1]][[3]],col='red',lwd=2)
-      
-      #plot of p-values for testing each frequency as a partition point (black) and 0.05 threshold (red) for each W
-      par(mfrow=c(3,1))
-      plot(m3b2.out[[3]][[1]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(m3b2.out[[3]][[2]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      plot(m3b2.out[[3]][[3]],type='l',xlab='Frequency',ylab='p-value',main='W1',ylim=c(0,1));
-      abline(h=0.05,col='red')
-      
-      #table of significant frequency partition points (none in the white noise case)
-      m3b2.out[[4]][which(m3b2.out[[4]][,2]==1),1]
-      
-      
-      #local periodogram with estimated cutpoints
-      idx=1 #component for which you want to view local periodogram (can be 1,2,..,R)
-      par(mfrow=c(1,1))
-      image.plot(x=(1:t)/(t+1),y=freq[-1],z=t(Re(pse[-1,idx+(idx-1)*R,])), 
-                 axes = TRUE, col = inferno(256),
-                 main = 'Local Periodogram',xlab='Time',ylab='Frequency',xaxs="i");
-      abline(h=m3b2.out[[4]][which(m3b2.out[[4]][,2]==1),1],col='green',lwd=2);
       X = X.m3b2;
     }
     
@@ -907,14 +707,397 @@ server <- function(input,output, session) {
     else{
       print('Error in Multivariate')
     }
+    method <- b.out
+    vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
+    indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
+    thresh <- method[[8]]
+    thresh_bounds <- numeric(0)
+    num_W <- dim(method[[3]])[1]
+    pvals <- numeric(0)
+    fre <- numeric(0)
+    for(i in 1:num_W){
+      curr <- method[[3]][[i]]
+      pvals <- c(pvals, curr[,2])
+      fre <- c(fre, curr[,1])
+    }
+    min_val <- numeric(0)
+    for(i in 1:length(unique(fre))){
+      cur_freq <- unique(fre)[i]
+      all_pvals <- pvals[which(fre == cur_freq)]
+      min_val <- c(min_val, min(all_pvals))
+      thresh_bounds[i] <- thresh[[which.min(all_pvals)]]
+    }
+    mod_val <- min_val
+    for(i in 1:length(min_val)){
+      if(min_val[i] == 0.000){
+        mod_val[i] <- "<1/1000"
+      }
+    }
+    uni_fre <- unique(fre)
+    sim_type <- input$SimSettingM
+    dimnames(pse) <- list(freq,apply(expand.grid(1:R,1:R),1,paste,collapse = "-"),1:t);
+    conf <- numeric(length(pse))
+    dim(conf) <- dim(pse)
+    dimnames(conf) <- dimnames(pse)
+    for(k in 1:dim(pse)[3]){
+      for(j in 1:dim(pse)[2]){
+        first_col <- ((j - 1) %% (as.numeric(R))) + 1 
+        second_col <- ((j - 1) %/% (as.numeric(R))) + 1
+        cmpt_1 <- paste(first_col, "-", first_col, sep="")
+        cmpt_2 <- paste(second_col, "-", second_col, sep="")
+        for(i in 1:dim(pse)[1]){
+          if(first_col == second_col){
+            conf[i,j,k] <- Re(pse[i,j,k])
+          } else {
+            conf[i,j,k] <- Re((Mod(pse[i,j,k])**2) / (pse[i,cmpt_1,k] * pse[i,cmpt_2,k]))
+          }
+        }
+      }
+    }
+    comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
+    #output$Mv_Plota <- renderPlotly({
+    #  a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
+    #    xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+    #    scale_x_continuous(limits=c(0,1), expand=c(0,0))
+    #  ggplotly(a)
+    #})
     
-    output$Mv_Plota <- renderPlotly({
-      a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
-        xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-        scale_x_continuous(limits=c(0,1), expand=c(0,0))
-      ggplotly(a)
+    show("mv_testa")
+    show("mvX_F1")
+    show("mv_testb")
+    show("mvX_F2")
+    show("Mv_10100")
+    show("q11_Mv1")
+    updateSliderInput(session, "mvX_F1", min = 1, max=as.numeric(R), value=1, step=1)
+    updateSliderInput(session, "mvX_F2", min = 1, max=as.numeric(R), value=1, step=1)
+    updateSliderInput(session, "q11_Mv1", min = 1, max=as.numeric(R), value=1, step=1)
+    output$MvPlotaDesc <- renderText({
+      paste(h4("Currently viewing component "))
+    })
+    output$mv_testa <- renderText({
+      paste(h4(strong((paste("1")))))
+    })
+    output$MvbPlotDesc <- renderText({
+      paste(h4("Currently viewing cross-component "))
+    })
+    output$MvPlot22Desc <- renderText({
+      paste(h4("Currently viewing cross-component "))
+    })
+    output$mv_testb <- renderText({
+      paste(h4(strong((paste("1-1")))))
+    })
+    output$Mv_10100 <- renderText({
+      paste(h4(strong((paste("1-1")))))
+    })
+    output$Plotly_Mva <- renderPlotly({
+      plot_ly(x = ~seq(from=1, to= ncol(X)), 
+              y = ~seq(from=0, to=1, length.out=nrow(X)), 
+              z = ~X) %>% add_surface() %>% layout(
+                title = "3D Representation of Simulated Multivariate Data",
+                scene = list(
+                  xaxis = list(title="Component"), 
+                  yaxis = list(title = "Timepoint"), 
+                  zaxis = list(title="Value")
+                )) %>% colorbar(title = "Value", len=1)
+    })
+    list(X = X, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
+         sim_type = sim_type, comp_names = comp_names, thresh_bounds = thresh_bounds, 
+         tested_freq = uni_fre, indexes=indexes)
+  })
+  
+  
+  output$Mv_Plota <- renderPlotly({
+    a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,1])), y=plot.listMv()[[1]][,1])) + 
+      xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+      scale_x_continuous(limits=c(0,1), expand=c(0,0))
+    ggplotly(a)
+  })
+  
+  output$Mv_Plotb <- renderPlot({
+    image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,1,])), 
+               axes = TRUE, col = inferno(256), 
+               main = "Local Periodogram",xlab='Time',ylab='Hz',xaxs="i",
+               bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+    abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
+    if(plot.listMv()[[7]] != 'W'){
+      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
+    }
+    vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                      just=c("left", "top"), y=0.55, x=0.65)
+    if(plot.listMv()[[7]] == 'W'){
+      act <- c("(0, 0.5)") 
+    } else {
+      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)") 
+    }
+    len <- length(plot.listMv()[[4]])
+    vals <- plot.listMv()[[4]]
+    if(len == 0){
+      str <- "(0, 0.5),"
+    } else if (len == 1) {
+      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+    } else {
+      str <- paste("(0", sep="")
+      for(i in 1:len){
+        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      }
+      str <- paste(str, ",", "0.5),", sep="")
+    }
+    spp <- strsplit(str, "),")[[1]]
+    for(a in 1:length(spp)){
+      spp[a] <- paste(spp[a], ")", sep="")
+    }
+    max_len <- max(length(act), length(spp))
+    if(length(act) == length(spp)){
+      
+    } else if(length(act) > length(spp)){
+      sp_l <- length(spp) + 1
+      for(i in sp_l: length(act)){
+        spp[i] <- ""
+      }
+    } else {
+      ac_l <- length(act) + 1
+      for(i in ac_l: length(spp)){
+        act[i] <- ""
+      }
+    }
+    pp <- data.frame(
+      "Actual Frequency Bands" = act, 
+      "Predicted Frequency Bands" = spp)
+    colnames(pp) <- c(
+      "Actual \n Frequency Bands", 
+      "Predicted \n Frequency Bands")
+    grid.table(pp, vp=vp.br, rows=NULL)
+    
+    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                     just=c("left", "top"), y=0.95, x=0.65)
+    grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+    jj <- grid.legend(c("Predicted Partition Points"
+                        , "Actual Partition Points"
+                        ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+                                                       , "lawngreen"
+                                                       )), vp=vp.r, 
+                      draw=TRUE)
+  })
+  
+  observeEvent(input$mvX_F1, ignoreNULL = FALSE, {
+    curr_col <- as.numeric(input$mvX_F1)
+    output$mv_testa <- renderText({
+      paste(h4(strong(paste(curr_col))))
+    })
+    if(is.na(curr_col)){
+      
+    } else {
+      output$Mv_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,curr_col])), y=plot.listMv()[[1]][,curr_col])) + 
+          xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
+      })
+    }
+    
+  })
+  
+  observeEvent(input$mvX_F2, ignoreNULL = TRUE, {
+    curr_num <- as.numeric(input$mvX_F2)
+    #if(is.na(plot.listF1()[[4]])){
+    #  
+    #} else {
+      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      output$mv_testb <- renderText({
+        paste(h4(strong((paste(curr_comp)))))
+      })
+      #if(strsplit(curr_comp, "-")[[1]][1] == strsplit(curr_comp, "-")[[1]][2]){
+        output$Mv_Plotb <- renderPlot({
+          image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv()[[1]])[2],])), 
+                     axes = TRUE, col = inferno(256), 
+                     main = "Local Periodogram",xlab='Time',ylab='Hz',xaxs="i",
+                     bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+          abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
+          if(plot.listMv()[[7]] != 'W'){
+            abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
+          }
+          vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                            just=c("left", "top"), y=0.55, x=0.65)
+          if(plot.listMv()[[7]] == 'W'){
+            act <- c("(0, 0.5)") 
+          } else {
+            act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)") 
+          }
+          len <- length(plot.listMv()[[4]])
+          vals <- plot.listMv()[[4]]
+          if(len == 0){
+            str <- "(0, 0.5),"
+          } else if (len == 1) {
+            str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+          } else {
+            str <- paste("(0", sep="")
+            for(i in 1:len){
+              str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+            }
+            str <- paste(str, ",", "0.5),", sep="")
+          }
+          spp <- strsplit(str, "),")[[1]]
+          for(a in 1:length(spp)){
+            spp[a] <- paste(spp[a], ")", sep="")
+          }
+          max_len <- max(length(act), length(spp))
+          if(length(act) == length(spp)){
+            
+          } else if(length(act) > length(spp)){
+            sp_l <- length(spp) + 1
+            for(i in sp_l: length(act)){
+              spp[i] <- ""
+            }
+          } else {
+            ac_l <- length(act) + 1
+            for(i in ac_l: length(spp)){
+              act[i] <- ""
+            }
+          }
+          pp <- data.frame(
+            "Actual Frequency Bands" = act, 
+            "Predicted Frequency Bands" = spp)
+          colnames(pp) <- c(
+            "Actual \n Frequency Bands", 
+            "Predicted \n Frequency Bands")
+          grid.table(pp, vp=vp.br, rows=NULL)
+          
+          vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                           just=c("left", "top"), y=0.95, x=0.65)
+          grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+          jj <- grid.legend(c("Predicted Partition Points"
+                              , "Actual Partition Points"
+          ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+                                         , "lawngreen"
+          )), vp=vp.r, 
+          draw=TRUE)
+        })
+        
+      #  } else {
+      #    output$Mv_Plotb <- renderPlot({
+      #      image.plot(x=(1:as.numeric(input$TsMv)) / (as.numeric(input$TsMv)),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,as.numeric(input$RMv),])), 
+      #                 axes = TRUE, col = inferno(256), 
+      #                 main = "Estimated Coherence",xlab='Time',ylab='Hz',xaxs="i",
+      #                 bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+      #      abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
+      #      if(plot.listMv()[[7]] != 'W'){
+      #        abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
+      #      }
+      #      vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+      #                        just=c("left", "top"), y=0.55, x=0.65)
+      #      if(plot.listMv()[[7]] == 'W'){
+      #        act <- c("(0, 0.5)") 
+      #      } else {
+      #        act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)") 
+      #      }
+      #      len <- length(plot.listMv()[[4]])
+      #      vals <- plot.listMv()[[4]]
+      #      if(len == 0){
+      #        str <- "(0, 0.5),"
+      #      } else if (len == 1) {
+      #        str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+      #      } else {
+      #        str <- paste("(0", sep="")
+      #        for(i in 1:len){
+      #          str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      #        }
+      #        str <- paste(str, ",", "0.5),", sep="")
+      #      }
+      #      spp <- strsplit(str, "),")[[1]]
+      #      for(a in 1:length(spp)){
+      #        spp[a] <- paste(spp[a], ")", sep="")
+      #      }
+      #      max_len <- max(length(act), length(spp))
+      #      if(length(act) == length(spp)){
+      #        
+      #      } else if(length(act) > length(spp)){
+      #        sp_l <- length(spp) + 1
+      #        for(i in sp_l: length(act)){
+      #          spp[i] <- ""
+      #        }
+      #      } else {
+      #        ac_l <- length(act) + 1
+      #        for(i in ac_l: length(spp)){
+      #          act[i] <- ""
+      #        }
+      #      }
+      #      pp <- data.frame(
+      #        "Actual Frequency Bands" = act, 
+      #        "Predicted Frequency Bands" = spp)
+      #      colnames(pp) <- c(
+      #        "Actual \n Frequency Bands", 
+      #        "Predicted \n Frequency Bands")
+      #      grid.table(pp, vp=vp.br, rows=NULL)
+      #      
+      #      vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+      #                       just=c("left", "top"), y=0.95, x=0.65)
+      #      grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+      #      jj <- grid.legend(c("Predicted Partition Points"
+      #                          , "Actual Partition Points"
+      #      ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+      #                                     , "lawngreen"
+      #      )), vp=vp.r, 
+      #      draw=TRUE)
+      #    })
+      # 
+      # }
+
+      
+   # }
+    
+  })
+  
+  
+  output$Plotly_Mvb <- renderPlotly({
+    plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
+            x=~plot.listMv()[[3]][-1],
+            z=~t(Re(plot.listMv()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                     yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                     zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+  })
+  
+  observeEvent(input$q11_Mv1, ignoreNULL = TRUE, {
+    curr_num <- as.numeric(input$q11_Mv1)
+    curr_comp <- paste(curr_num, "-", curr_num, sep="")
+    output$Mv_10100 <- renderText({
+      paste(h4(strong((paste(curr_comp)))))
+    })
+    output$Plotly_Mvb <- renderPlotly({
+      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
+              x=~plot.listMv()[[3]][-1],
+              z=~t(Re(plot.listMv()[[2]][-1,curr_num + (curr_num-1)*ncol(plot.listMv()[[1]]),])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                                                                                      yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                                                                                      zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
     })
     
+  })
+  
+  output$summ_out_Mv <- renderPlot({
+    freq <- round(plot.listMv()[[10]], 3)
+    mod_pval <- plot.listMv()[[6]]
+    min_pval <- round(plot.listMv()[[5]], 5)
+    thresh <- round(plot.listMv()[[9]], 5)
+    Sig <- character(length(min_pval))
+    for(i in 1:length(Sig)){
+      if(min_pval[i] < thresh[i]){
+        Sig[i] <- "TRUE"
+      } else {
+        Sig[i] <- "FALSE"
+      }
+    }
+    res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
+    colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
+    sig <- which(plot.listMv()[[10]] %in% plot.listMv()[[4]])
+    res <- res[sig, ]
+    res1 <- tableGrob(res, rows = NULL)
+    title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+    blank9090 <- textGrob(""); blank0909 <- textGrob("")
+    grid.arrange(title, res1, blank0909, ncol = 1)
+  })
+  output$summ_pval_Mv <- renderPlot({
+    ggplot() + geom_point(aes(x = as.numeric(plot.listMv()[[10]]), y = as.numeric(plot.listMv()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+      xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+      geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
   })
   
   #####################################################
@@ -922,6 +1105,9 @@ server <- function(input,output, session) {
   #####################################################
   
   plot.listF1 <- eventReactive(input$goF1, ignoreNULL = TRUE, {
+    source("fEBA_Rfns.R")
+    Rcpp::sourceCpp("fEBA_072321.cpp")
+    
     ##get sim data
     nb=15; #number of basis functions used to generate white noise
     R=as.numeric(input$RF1); #number of points in functional domain
@@ -1659,6 +1845,8 @@ server <- function(input,output, session) {
     paste(h4("Currently viewing timepoint "))
   })
   plot.listFxn2 <- eventReactive(input$go_Fxna,  {
+    source("fEBA_Rfns.R")
+    Rcpp::sourceCpp("fEBA_072321.cpp")
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
     req(file)
