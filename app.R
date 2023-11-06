@@ -244,7 +244,9 @@ ui <- fluidPage(
                          column(width = 5, plotOutput("summ_pval_Mv", height = 500, width = 500))
                        ), 
                        
-                       br()
+                       downloadButton('downloadDataMV1','Download the Above Results'),
+                       br(),
+                       br(),
       )),
       conditionalPanel(condition = "input.tabselected==2",
                        plotOutput("Image_Plota", height=400, width=1000),
@@ -808,7 +810,7 @@ server <- function(input,output, session) {
   
   output$Mv_Plota <- renderPlotly({
     a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,1])), y=plot.listMv()[[1]][,1])) + 
-      xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+      xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
       scale_x_continuous(limits=c(0,1), expand=c(0,0))
     ggplotly(a)
   })
@@ -889,7 +891,7 @@ server <- function(input,output, session) {
     } else {
       output$Mv_Plota <- renderPlotly({
         a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,curr_col])), y=plot.listMv()[[1]][,curr_col])) + 
-          xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          xlab("Time") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
         ggplotly(a)
       })
@@ -2877,6 +2879,121 @@ server <- function(input,output, session) {
               xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
               geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
       
+      dev.off()
+    }
+  )
+  output$downloadDataMV1 <- downloadHandler(
+    filename = function(){
+      paste("Simulated_Output_Results","pdf",sep = ".") 
+    },
+    content = function(file){
+      pdf(file, paper = "USr", width = 1100, height=600, onefile = TRUE)
+      par(mar=c(4,4,12,12))
+      vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
+                         just=c( "bottom"), y=0.6, x=0.475)
+      curr_num <- as.numeric(input$mvX_F2)
+      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      
+        image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv()[[1]])[2],])), 
+                   axes = TRUE, col = inferno(256), 
+                   xlab='Time',ylab='Hz',xaxs="i",
+                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .1, .5)); title(paste("Local Periodogram of Component", curr_comp), line = 0.75)
+        abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
+        if(plot.listMv()[[7]] != 'W'){
+          abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
+        }
+        vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                          just=c("left", "top"), y=0.55, x=0.65)
+        if(plot.listMv()[[7]] == 'W'){
+          act <- c("(0, 0.5)") 
+        } else {
+          act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)") 
+        }
+        len <- length(plot.listMv()[[4]])
+        vals <- plot.listMv()[[4]]
+        if(len == 0){
+          str <- "(0, 0.5),"
+        } else if (len == 1) {
+          str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+        } else {
+          str <- paste("(0", sep="")
+          for(i in 1:len){
+            str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+          }
+          str <- paste(str, ",", "0.5),", sep="")
+        }
+        spp <- strsplit(str, "),")[[1]]
+        for(a in 1:length(spp)){
+          spp[a] <- paste(spp[a], ")", sep="")
+        }
+        max_len <- max(length(act), length(spp))
+        if(length(act) == length(spp)){
+          
+        } else if(length(act) > length(spp)){
+          sp_l <- length(spp) + 1
+          for(i in sp_l: length(act)){
+            spp[i] <- ""
+          }
+        } else {
+          ac_l <- length(act) + 1
+          for(i in ac_l: length(spp)){
+            act[i] <- ""
+          }
+        }
+        pp <- data.frame(
+          "Actual Frequency Bands" = act, 
+          "Predicted Frequency Bands" = spp)
+        colnames(pp) <- c(
+          "Actual \n Frequency Bands", 
+          "Predicted \n Frequency Bands")
+        
+        
+        vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
+                          just=c("left", "top"), y=0.5, x=0.63)
+        grid.table(pp, vp=vp.br, rows=NULL)
+        vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.5, "npc"), 
+                         just=c("left", "top"), y=0.65, x=0.58)
+        grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+        
+        jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                          draw=TRUE)
+        
+        curr_col <- as.numeric(input$mvX_F1)
+        print(ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,curr_col])), y=plot.listMv()[[1]][,curr_col])) + 
+              xlab("Time") + ylab("") + ggtitle(paste("Simulated Data of Component ", curr_col)) + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+              scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top )
+            
+        
+      #plot.new()
+      vp.r <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                       y=0.5, x=0.75)
+      vp.l <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                       y=0.5, x=0.25)
+      ###
+      
+        freq <- round(plot.listMv()[[10]], 3)
+        mod_pval <- plot.listMv()[[6]]
+        min_pval <- round(plot.listMv()[[5]], 5)
+        thresh <- round(plot.listMv()[[9]], 5)
+        Sig <- character(length(min_pval))
+        for(i in 1:length(Sig)){
+          if(min_pval[i] < thresh[i]){
+            Sig[i] <- "TRUE"
+          } else {
+            Sig[i] <- "FALSE"
+          }
+        }
+        res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
+        colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
+        sig <- which(plot.listMv()[[10]] %in% plot.listMv()[[4]])
+        res <- res[sig, ]
+        res1 <- tableGrob(res, rows = NULL)
+        title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+        blank9090 <- textGrob(""); blank0909 <- textGrob("")
+        grid.arrange(title, res1, blank0909, ncol = 1, vp=vp.l)
+        print(ggplot() + geom_point(aes(x = as.numeric(plot.listMv()[[10]]), y = as.numeric(plot.listMv()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+          xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
       dev.off()
     }
   )
