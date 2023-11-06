@@ -1241,10 +1241,12 @@ server <- function(input,output, session) {
     plot.main_2 <- "Estimated Coherence"
     plot.main_3D <- "3D Representation of Autospectrogram"
     plot.main_3D.2 <- "3D Representation of Coherence"
+    dat_type <- as.character(input$SimF1)
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
         plot.main = plot.main, plot.cmp = plot.cmp, plot.data = plot.data, 
         plot.main_2 = plot.main_2, plot.main_3D = plot.main_3D, plot.main_3D.2 = plot.main_3D.2, 
-        plot.log = res$summary, plot.freq = unname(tmp[,1]), plot.pvals = unname(tmp[,3]))
+        plot.log = res$summary, plot.freq = unname(tmp[,1]), plot.pvals = unname(tmp[,3]),
+        dat_type = dat_type)
     
   });
   output$summ_out_fxn <- renderPlot({
@@ -1277,10 +1279,14 @@ server <- function(input,output, session) {
                main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
                bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
     abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
-    abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+    if(plot.listF1()[[13]] == "W"){
+      act <- c("(0,0.5)")
+    } else {
+      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+    }
     vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
                       just=c("left", "top"), y=0.55, x=0.65)
-    act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
     len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
     vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
     if(len == 0){
@@ -1346,10 +1352,14 @@ server <- function(input,output, session) {
                      main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
                      bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85));
           abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
-          abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+          if(plot.listF1()[[13]] == "W"){
+            act <- c("(0,0.5)")
+          } else {
+            abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+            act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+          }
           vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
                             just=c("left", "top"), y=0.55, x=0.65)
-          act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
           len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
           vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
           if(len == 0){
@@ -1399,10 +1409,14 @@ server <- function(input,output, session) {
                      main = plot.listF1()[[7]],xlab='Time',ylab='Hz',xaxs="i",
                      bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
           abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
-          abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+          if(plot.listF1()[[13]] == "W"){
+            act <- c("(0,0.5)")
+          } else {
+            abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+            act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+          }
           vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
                             just=c("left", "top"), y=0.55, x=0.65)
-          act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
           len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
           vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
           if(len == 0){
@@ -2324,9 +2338,11 @@ server <- function(input,output, session) {
       plot.flat = ebaout.bS$flat
       
     }
+    dat_type <- as.character(input$Simsetting)
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
          plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
-         plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat)
+         plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat,
+         dat_type = dat_type)
     
   });
   
@@ -2340,11 +2356,15 @@ server <- function(input,output, session) {
                axes = TRUE, col = inferno(256), 
                xlab='Time',ylab='Hz',xaxs="i", 
                bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5));title(plot.list()[[4]], line=0.75); 
-    abline(h=plot.list()[[5]], col = "skyblue", lwd=3); abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
-    
+    abline(h=plot.list()[[5]], col = "skyblue", lwd=3)
+    if(plot.list()[[10]] == "W"){
+      act <- c("(0,0.5)")
+    } else {
+      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+    }
     vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
                       just=c("left", "top"), y=0.5, x=0.6)
-    act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
     len <- length(plot.list()[[5]])
     vals <- plot.list()[[5]]
     if(len == 0){
@@ -2534,11 +2554,15 @@ server <- function(input,output, session) {
                  axes = TRUE, col = inferno(256), 
                  xlab='Time',ylab='Hz',xaxs="i", 
                  bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5));title(plot.list()[[4]], line=0.75); 
-      abline(h=plot.list()[[5]], col = "skyblue", lwd=3); abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
-      
+      abline(h=plot.list()[[5]], col = "skyblue", lwd=3)
+      if(plot.list()[[10]] == "W"){
+        act <- c("(0,0.5)")
+      } else {
+        abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+        act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+      }
       vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
                         just=c("left", "top"), y=0.5, x=0.65)
-      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
       len <- length(plot.list()[[5]])
       vals <- plot.list()[[5]]
       if(len == 0){
@@ -2768,11 +2792,14 @@ server <- function(input,output, session) {
                    bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated coherence of component", curr_comp), line = 0.75)
       }
       abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col = "skyblue", lwd=3); 
-      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
-      
+      if(plot.listF1()[[13]] == "W"){
+        act <- c("(0,0.5)")
+      } else {
+        abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+        act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+      }
       vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
                         just=c("left", "top"), y=0.5, x=0.65)
-      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
       len <- length(unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]))
       vals <- unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1])
       if(len == 0){
