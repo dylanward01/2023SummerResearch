@@ -732,7 +732,7 @@ server <- function(input,output, session) {
     mod_val <- min_val
     for(i in 1:length(min_val)){
       if(min_val[i] == 0.000){
-        mod_val[i] <- "<1/1000"
+        mod_val[i] <- paste("<1/", nrep, sep="")
       }
     }
     uni_fre <- unique(fre)
@@ -1548,7 +1548,7 @@ server <- function(input,output, session) {
     } else {
       file <- input$file_csv
       ext <- tools::file_ext(file$datapath)
-      dataf <- read.csv(file$datapath, header = input$header)[,-1]
+      dataf <- read.csv(file$datapath, header = input$header)
       updateNumericInput(session, "Num_Fxna", value  = floor(sqrt(dim(dataf)[1])))
       updateNumericInput(session, "Tapers_Fxna", value = floor(dim(dataf)[1] ** 0.25))
       if(dim(dataf)[2] == 5){
@@ -1642,7 +1642,7 @@ server <- function(input,output, session) {
       show("summ_out_uni_file")
       show("summ_pval_uni_file")
     } else {
-      dataf <- dataf[,-1]
+      dataf <- dataf
       hide("UniVarDis")
       show("NotUniVar")
       output$NotUniVar <- renderText({
@@ -1805,7 +1805,7 @@ server <- function(input,output, session) {
   observeEvent(input$Num_Fxna, {
     curr_num <- as.numeric(input$Num_Fxna)
     output$Fxn_BB <- renderText({
-      paste(h6("*Valid choices range from 1 to ", floor((curr_num/ 4 - 1)) - 1 , "as we need to satisfy 1", HTML("&le;"), 
+      paste(h6("**Valid choices range from 1 to ", floor((curr_num/ 4 - 1)) - 1 , "as we need to satisfy 1", HTML("&le;"), 
                "K < floor(N/4 - 1)"))
     })
   })
@@ -1867,7 +1867,7 @@ server <- function(input,output, session) {
     ext <- tools::file_ext(file$datapath)
     req(file)
     validate(need(ext == "csv", "Please upload a csv file"))
-    dataf <- read.csv(file$datapath, header = input$header)[,-1]
+    dataf <- read.csv(file$datapath, header = input$header)
     dataf <- as.matrix(dataf)
     colnames(dataf) <- NULL
     nrow = nrow(dataf); ncol = ncol(dataf)
