@@ -227,15 +227,14 @@ ui <- fluidPage(
                        plotOutput("Mv_Plotb", height=600, width = 1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("MvbPlotDesc") ),
-                                column(width=4, htmlOutput("mv_testb")),
+                                column(width=4, hidden(htmlOutput("mv_testb"))),
                                 column(width=2, hidden(sliderInput("mvX_F2",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
                        ),
                        conditionalPanel(condition = "input.Plot3DM == 'Include'",
-                       plotlyOutput("Plotly_Mva", height=600, width=1000),
                        plotlyOutput("Plotly_Mvb", height=600, width=1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("MvPlot22Desc") ),
-                                column(width=4, htmlOutput("Mv_10100")),
+                                column(width=4, hidden(htmlOutput("Mv_10100"))),
                                 column(width=2, hidden(sliderInput(inputId = "q11_Mv1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
                        ),
@@ -712,7 +711,10 @@ server <- function(input,output, session) {
     method <- b.out
     vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
     indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
-    thresh <- method[[8]]
+    thresh <- numeric(0)
+    for(i in 1:nrow(method[[3]])){
+      thresh[i] <- 0.05 / nrow(method[[3]][[i]])
+    }
     thresh_bounds <- numeric(0)
     num_W <- dim(method[[3]])[1]
     pvals <- numeric(0)
@@ -732,7 +734,7 @@ server <- function(input,output, session) {
     mod_val <- min_val
     for(i in 1:length(min_val)){
       if(min_val[i] == 0.000){
-        mod_val[i] <- paste("<1/", nrep, sep="")
+        mod_val[i] <- paste("<", 1/nrep, sep="")
       }
     }
     uni_fre <- unique(fre)
@@ -790,17 +792,6 @@ server <- function(input,output, session) {
     })
     output$Mv_10100 <- renderText({
       paste(h4(strong((paste("1-1")))))
-    })
-    output$Plotly_Mva <- renderPlotly({
-      plot_ly(x = ~seq(from=1, to= ncol(X)), 
-              y = ~seq(from=0, to=1, length.out=nrow(X)), 
-              z = ~X) %>% add_surface() %>% layout(
-                title = "3D Representation of Simulated Multivariate Data",
-                scene = list(
-                  xaxis = list(title="Component"), 
-                  yaxis = list(title = "Timepoint"), 
-                  zaxis = list(title="Value")
-                )) %>% colorbar(title = "Value", len=1)
     })
     list(X = X, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
          sim_type = sim_type, comp_names = comp_names, thresh_bounds = thresh_bounds, 
@@ -2897,7 +2888,7 @@ server <- function(input,output, session) {
         image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv()[[1]])[2],])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i",
-                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .1, .5)); title(paste("Local Periodogram of Component", curr_comp), line = 0.75)
+                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525)); title(paste("Local Periodogram of Component", curr_comp), line = 0.75)
         abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
         if(plot.listMv()[[7]] != 'W'){
           abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
@@ -3009,7 +3000,7 @@ server <- function(input,output, session) {
       image.plot(x=plot.list2()[[1]], y=plot.list2()[[2]], z=plot.list2()[[3]], 
                  axes = TRUE, col = inferno(256), 
                  xlab='Time',ylab='Hz',xaxs="i", 
-                 bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .1, .5));title(plot.list2()[[4]], line=0.75); 
+                 bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525));title(plot.list2()[[4]], line=0.75); 
       abline(h=plot.list2()[[5]], col = "skyblue", lwd=3); 
       
       len <- length(plot.list2()[[5]])

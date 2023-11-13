@@ -56,8 +56,7 @@ Rcpp::List msboot(int nrep, arma::mat x, int Wsel, bool stdz, int ncore){
   arma::field<arma::mat> dfobs2all(Wsel);
   arma::field<arma::cube> dfboot2all(Wsel);
   arma::field<arma::mat> dfpval2all(Wsel);
-  arma::field<arma::mat> thres(Wsel);
-  arma::field<arma::mat> freqcand_all(Wsel);
+  
   Rprintf("Calculating local periodogram and demeaned local periodogram\n");
   arma::cx_cube pse = fhat(x,N,stdz); 
   arma::cx_cube gpse = ghat(pse);
@@ -140,8 +139,7 @@ Rcpp::List msboot(int nrep, arma::mat x, int Wsel, bool stdz, int ncore){
       uvec srtidx = sort_index(dfobs,"descend"); //ordering of largest test stats
       
       //bonferroni correction for candidate testing points
-      double thr = 0.05/accu(freqcand);
-      freqcand_all(idxw) = freqcand;
+      double thr = 0.05/accu(freqcand.col(1));
       int stp=0;
       while(stp==0){
          for (int i=0; i < (int)srtidx.n_rows; i++){
@@ -160,7 +158,6 @@ Rcpp::List msboot(int nrep, arma::mat x, int Wsel, bool stdz, int ncore){
       dfobsall(idxw) = join_horiz(freq.rows(W,Fs-W-1),dfobs); //observed test statistics for all frequencies
       dfbootall(idxw) = join_horiz(freq.rows(W,Fs-W-1),dfboot); //observed test statistics for all frequencies
       dfpvalall(idxw) = join_horiz(freq.rows(W,Fs-W-1),dfpval);
-     thres(idxw) = thr;
      
       dfobs2all(idxw) = dfobs2; //observed test statistics for all frequencies
       dfboot2all(idxw) = dfboot2; //observed test statistics for all frequencies
@@ -170,7 +167,7 @@ Rcpp::List msboot(int nrep, arma::mat x, int Wsel, bool stdz, int ncore){
   }
 
   Rcpp::List out=List::create(dfobsall,dfbootall,dfpvalall,freqsig,
-                              dfobs2all,dfboot2all,dfpval2all,thres,freqcand_all);
+                              dfobs2all,dfboot2all,dfpval2all);
   return out;
 }
 
