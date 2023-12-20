@@ -121,8 +121,12 @@ ui <- fluidPage(
                        hidden(radioButtons("Plot3D_File", "3D Plots", 
                                     choices=c("Include","Exclude"), 
                                     selected="Include")),
+                       hidden(radioButtons("Plot3D_FileM", "3D Plots", 
+                                           choices=c("Include","Exclude"), 
+                                           selected="Include")),
                        htmlOutput("T_len"),
                        hidden(htmlOutput("Ts_Fxn_Dim")),
+                       hidden(htmlOutput("Ts_Mv_Dim")),
                        numericInput(inputId = "Num2", label = "Choose number of observations per approximately stationary block* (N)", 
                                    value = NULL, step = 1),
                        
@@ -142,10 +146,14 @@ ui <- fluidPage(
                                           choices = c(5,10), selected = 5)),
                        hidden(selectInput(inputId = "Signi_Fxna", label="Choose significance level", 
                                    choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05)),
-                       
                        hidden(radioButtons(inputId = "TF_Fxna", label = "Standardize", 
                                     c("True" = TRUE, "False" = FALSE), selected = FALSE)),
                        hidden(actionButton("go_Fxna", label = "Run")),
+                       hidden(selectInput(inputId = "nrepMv_file", label="Choose the number of repetitions (nrep)",
+                                   choices=c(100,500,1000,2000), selected=1000)),
+                       hidden(selectInput(inputId = "WselMv_file", label="Choose the number of different neighborhood pairings to test (Wsel)",
+                                   choices=c(1,2,3,4,5), selected=3)),
+                       hidden(actionButton("go_Mva", label= "Run")),
                        actionButton("go2", label = "Run"), 
                        htmlOutput("res9"),
                        htmlOutput("res10"),
@@ -179,12 +187,9 @@ ui <- fluidPage(
                                 column(width=4, hidden(htmlOutput("test12121"))),
                                 column(width=2, hidden(sliderInput(inputId = "x_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
                        ),
-                       
-                     
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                       
                        plotOutput("Fxn_Plotb", height=600, width = 1000), 
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 column(width=6,  htmlOutput("FxnbPlotDesc") ),
@@ -202,7 +207,6 @@ ui <- fluidPage(
                                 column(width=4, htmlOutput("Blank10100")),
                                 column(width=2, hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
-                       
                        ), 
                        fluidRow(
                          column(width = 5, plotOutput("summ_out_fxn", height = 500, width=500)), 
@@ -296,7 +300,44 @@ ui <- fluidPage(
                                         br(),
                                         br()
                                         
-                       )
+                       ), 
+                       conditionalPanel(condition = "input.Data_Checker == 'Multivariate'",
+                                        plotlyOutput("Test_Mva_Plot1", width=1000), 
+                                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 column(width=6,  htmlOutput("MvPlotaDesc_AA") ),
+                                                 column(width=4, htmlOutput("Mv12121_AA")),
+                                                 column(width=2, sliderInput(inputId = "x_Mv_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
+                                        ),
+                                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
+                                                 visibility: hidden !important;
+                                                 }' ))),
+                                        plotOutput("Mv_Plotb_file", height=600, width=1000),
+                                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 column(width=6,  htmlOutput("MvbPlotDesc_file") ),
+                                                 column(width=4, hidden(htmlOutput("Mv2_file"))),
+                                                 column(width=2, hidden(sliderInput("plot1_MvCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
+                                        ),
+                                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
+                                                 visibility: hidden !important;
+                                                 }' ))),
+                                        conditionalPanel(condition = "input.Plot3D_FileM == 'Include'",
+                                                         plotlyOutput("Plotly_Mvb_file", height=600, width=1000),
+                                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                                  column(width=6,  htmlOutput("MvPlot22Desc_file") ),
+                                                                  column(width=4, hidden(htmlOutput("BlankMv_file"))),
+                                                                  column(width=2, hidden(sliderInput(inputId = "q11_Mv_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE)))
+                                                         ),
+
+                                        ),
+                                        fluidRow(
+                                          column(width = 5, plotOutput("summ_out_Mv_file", height = 500, width=500)),
+                                          column(width = 5, plotOutput("summ_pval_Mv_file", height = 500, width = 500)),
+                                          #column(width = 4, dataTableOutput("summ_flat_uni"))
+                                        ),
+                                        downloadButton('downloadDataMv1_File','Download the Above Results'),
+                                        br(),
+                                        br()
+                                        )
       ), 
       )
   ))
@@ -1090,7 +1131,7 @@ server <- function(input,output, session) {
   output$summ_pval_Mv <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listMv()[[10]]), y = as.numeric(plot.listMv()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
   
   #####################################################
@@ -1264,7 +1305,7 @@ server <- function(input,output, session) {
   output$summ_pval_fxn <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = (plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = (plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
   output$Fxn_Plotb <- renderPlot({
     image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,"1-1",]))), 
@@ -1547,6 +1588,7 @@ server <- function(input,output, session) {
       }
       main = c("check")
       updateSliderInput(session, "x_F1_AA", max=dim(dataf)[1], min=1, value=1, step=1)
+      updateSliderInput(session, "x_Mv_AA", min = 1, max=dim(dataf)[2], value=1, step=1)
       list(dataf=dataf, main = main)}}
   )
   observeEvent(input$file_csv, {
@@ -1559,13 +1601,46 @@ server <- function(input,output, session) {
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
         ggplotly(a)
       })
+      output$Test_Mva_Plot1 <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,1]))) +
+          xlab("Time") + ylab("") + ggtitle("Observed Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) +
+          scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
+      })
       output$test12121_AA <- renderText({
         paste(h4(strong("1")))
       })
+      output$Mv12121_AA <- renderText({
+        paste(h4(strong((paste("1")))))
+      })
+      hide("MvbPlotDesc_file")
+      hide("Mv1_file")
+      hide("MvPlot22Desc_file")
+      hide("BlankMv_file")
+      hide("q11_Mv_file")
+      hide("plot1_MvCheck_file")
       hide("Blank2_file")
       hide("FxnbPlotDesc_file")
       hide("plot1_FxnCheck_file")
       hide("Fxn_Plotb_file")
+      hide("downloadDataFXN1_File")
+      hide("summ_out_fxn_file")
+      hide("summ_pval_fxn_file")
+      hide("summ_out_Mv_file")
+      hide("summ_pval_Mv_file")
+      hide("Mv_Plotb_file")
+      hide("Mv2_file")
+      hide("plot1_MvCheck_file")
+      hide("BlankMv_file")
+      hide("q11_Mv_file")
+      hide("MvbPlotDesc_file")
+      hide("MvPlot22Desc_file")
+      output$Mv_Plotb_file <- renderPlot({
+       
+      })
+      output$Plotly_Mvb_file <- renderPlotly({
+        
+      })
       output$Fxn_Plotb_file <- renderPlot({
         
       })
@@ -1593,6 +1668,14 @@ server <- function(input,output, session) {
     show("Blank10100_file")
     show("q11_F1_file")
   })
+  observeEvent(input$go_Mva, {
+    #show("MvbPlotDesc_file")
+    #show("Mv2_file")
+    #show("MvPlot22Desc_file")
+    #show("BlankMv_file")
+    #show("q11_Mv_file")
+    #show("plot1_MvCheck_file")
+  })
   observeEvent(input$file_csv, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1608,6 +1691,7 @@ server <- function(input,output, session) {
       hide("Data_Checker")
       updateRadioButtons(session, "Data_Checker", selected=character(0))
       hide("Plot3D_File")
+      hide("Plot3D_FileM")
       hide("Num_Fxna")
       hide("Tapers_Fxna")
       hide("Ts_Fxn_Dim")
@@ -1618,6 +1702,10 @@ server <- function(input,output, session) {
       hide("Signi_Fxna")
       hide("TF_Fxna")
       hide("go_Fxna")
+      hide("Ts_Mv_Dim")
+      hide("nrepMv_file")
+      hide("WselMv_file")
+      hide("go_Mva")
       show("T_len")
       show("Num2")
       show("Tapers2")
@@ -1641,6 +1729,9 @@ server <- function(input,output, session) {
                      time series this is. "))
       })
       output$Ts_Fxn_Dim <- renderText({
+        paste(strong(paste("Dimensions of Time Series (T x R): ", dim(dataf)[1], "x", dim(dataf)[2] )))
+      })
+      output$Ts_Mv_Dim <- renderText({
         paste(strong(paste("Dimensions of Time Series (T x R): ", dim(dataf)[1], "x", dim(dataf)[2] )))
       })
       if(dim(dataf)[2] < 10){
@@ -1706,8 +1797,13 @@ server <- function(input,output, session) {
       #              "Rsel", HTML("&le;")," R"))
       #   })
       # }
-      
+      hide("Ts_Mv_Dim")
+      hide("nrepMv_file")
+      hide("WselMv_file")
+      hide("go_Mva")
+      hide("Plot3D_FileM")
     } else {
+      hide("Plot3D_File")
       hide("Num_Fxna")
       hide("Tapers_Fxna")
       hide("Rsel_Fxna")
@@ -1718,6 +1814,11 @@ server <- function(input,output, session) {
       hide("Fxn_AA")
       hide("Fxn_BB")
       hide("Fxn_CC")
+      show("Ts_Mv_Dim")
+      show("nrepMv_file")
+      show("WselMv_file")
+      show("go_Mva")
+      show("Plot3D_FileM")
     }
   })
   observeEvent(input$file_csv, {
@@ -1823,6 +1924,30 @@ server <- function(input,output, session) {
     }
     
   })
+  observeEvent(input$x_Mv_AA, ignoreNULL = FALSE, {
+    file <- input$file_csv
+    ext <- tools::file_ext(file$datapath)
+    le <- length(file[[1]])
+    if(le == 0){
+      
+    } else if(is.na(plot.listbb()[[2]])){
+      
+    } else {
+      get_num <- as.numeric(input$x_Mv_AA)
+      
+      output$Mv12121_AA <- renderText({
+        paste(h4(strong((paste(get_num)))))
+      })
+      output$Test_Mva_Plot1 <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,get_num]))) +
+          xlab("Time") + ylab("") + ggtitle("Observed Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) +
+          scale_x_continuous(limits=c(0,1), expand=c(0,0))
+        ggplotly(a)
+      })
+    }
+    
+  })
+  
   output$res10 <- renderText({
     
   })
@@ -1851,6 +1976,305 @@ server <- function(input,output, session) {
   output$FxnPlotaDesc_AA <- renderText({
     paste(h4("Currently viewing timepoint "))
   })
+  show("MvPlotaDesc_AA")
+  output$MvPlotaDesc_AA <- renderText({
+    paste(h4("Currently viewing component "))
+  })
+  plot.listMv2 <- eventReactive(input$go_Mva, ignoreNULL = FALSE, {
+    source("mEBA_Rfunctions.R")
+    Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
+    file <- input$file_csv
+    ext <- tools::file_ext(file$datapath)
+    req(file)
+    validate(need(ext == "csv", "Please upload a csv file"))
+    dataf <- read.csv(file$datapath, header = input$header)
+    dataf <- as.matrix(dataf)
+    colnames(dataf) <- NULL
+    nrow = nrow(dataf); ncol = ncol(dataf)
+    t <- nrow; R <- ncol
+    nrep = as.numeric(input$nrepMv_file)
+    Wsel = as.numeric(input$WselMv_file)
+    seed=234; #seed for reproducibility
+    N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
+    freq <- seq(0,floor(N/2),by=1)/N
+    pse <- fhat(dataf,N,stdz=FALSE);
+    gpse <- ghat(pse);
+    b.out=msboot(nrep=nrep, dataf, Wsel=Wsel, stdz=FALSE, ncore=1)
+    method <- b.out
+    vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
+    indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
+    thresh <- numeric(0)
+    for(i in 1:nrow(method[[3]])){
+      thresh[i] <- 0.05 / nrow(method[[3]][[i]])
+    }
+    thresh_bounds <- numeric(0)
+    num_W <- dim(method[[3]])[1]
+    pvals <- numeric(0)
+    fre <- numeric(0)
+    for(i in 1:num_W){
+      curr <- method[[3]][[i]]
+      pvals <- c(pvals, curr[,2])
+      fre <- c(fre, curr[,1])
+    }
+    min_val <- numeric(0)
+    for(i in 1:length(unique(fre))){
+      cur_freq <- unique(fre)[i]
+      all_pvals <- pvals[which(fre == cur_freq)]
+      min_val <- c(min_val, min(all_pvals))
+      thresh_bounds[i] <- thresh[[which.min(all_pvals)]]
+    }
+    mod_val <- min_val
+    for(i in 1:length(min_val)){
+      if(min_val[i] == 0.000){
+        mod_val[i] <- paste("<", 1/nrep, sep="")
+      }
+    }
+    uni_fre <- unique(fre)
+    dimnames(pse) <- list(freq,apply(expand.grid(1:R,1:R),1,paste,collapse = "-"),1:t);
+    conf <- numeric(length(pse))
+    dim(conf) <- dim(pse)
+    dimnames(conf) <- dimnames(pse)
+    for(k in 1:dim(pse)[3]){
+      for(j in 1:dim(pse)[2]){
+        first_col <- ((j - 1) %% (as.numeric(R))) + 1 
+        second_col <- ((j - 1) %/% (as.numeric(R))) + 1
+        cmpt_1 <- paste(first_col, "-", first_col, sep="")
+        cmpt_2 <- paste(second_col, "-", second_col, sep="")
+        for(i in 1:dim(pse)[1]){
+          if(first_col == second_col){
+            conf[i,j,k] <- Re(pse[i,j,k])
+          } else {
+            conf[i,j,k] <- Re((Mod(pse[i,j,k])**2) / (pse[i,cmpt_1,k] * pse[i,cmpt_2,k]))
+          }
+        }
+      }
+    }
+    comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
+    
+    show("Mv12121_AA")
+    show("x_Mv_AA")
+    show("Mv2_file")
+    show("Mv_Plotb_file")
+    show("plot1_MvCheck_file")
+    show("q11_Mv_file")
+    show("BlankMv_file")
+    show("summ_out_Mv_file")
+    show("summ_pval_Mv_file")
+    show("MvbPlotDesc_file")
+    show("MvPlot22Desc_file")
+    # show("q11_Mv1")
+    updateSliderInput(session, "x_Mv_AA", min = 1, max=as.numeric(R), value=1, step=1)
+    updateSliderInput(session, "plot1_MvCheck_file", min = 1, max=as.numeric(R), value=1, step=1)
+    updateSliderInput(session, "q11_Mv_file", min = 1, max=as.numeric(R), value=1, step=1)
+    # output$MvPlotaDesc <- renderText({
+    #   paste(h4("Currently viewing component "))
+    # })
+    output$Mv12121_AA <- renderText({
+       paste(h4(strong((paste("1")))))
+    })
+    output$MvbPlotDesc_file <- renderText({
+       paste(h4("Currently viewing cross-component "))
+    })
+    output$MvPlot22Desc_file <- renderText({
+      paste(h4("Currently viewing cross-component "))
+    })
+    output$Mv2_file <- renderText({
+      paste(h4(strong((paste("1-1")))))
+    })
+    output$BlankMv_file <- renderText({
+      paste(h4(strong((paste("1-1")))))
+    })
+    check = "Test"
+    list(X = dataf, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
+         comp_names = comp_names, thresh_bounds = thresh_bounds, 
+         tested_freq = uni_fre, indexes=indexes, check = check)
+  })
+  observeEvent(plot.listMv2()[[11]], {
+    
+  })
+  output$Mv_Plotb_file <- renderPlot({
+    image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,1,])), 
+               axes = TRUE, col = inferno(256), 
+               main = "Local Periodogram",xlab='Time',ylab='Hz',xaxs="i",
+               bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+    abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
+    vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                      just=c("left", "top"), y=0.55, x=0.65)
+    len <- length(plot.listMv2()[[4]])
+    vals <- plot.listMv2()[[4]]
+    if(len == 0){
+      str <- "(0, 0.5),"
+    } else if (len == 1) {
+      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+    } else {
+      str <- paste("(0", sep="")
+      for(i in 1:len){
+        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      }
+      str <- paste(str, ",", "0.5),", sep="")
+    }
+    spp <- strsplit(str, "),")[[1]]
+    for(a in 1:length(spp)){
+      spp[a] <- paste(spp[a], ")", sep="")
+    }
+    pp <- data.frame(
+      "Predicted Frequency Bands" = spp)
+    colnames(pp) <- c(
+      "Predicted \n Frequency Bands")
+    grid.table(pp, vp=vp.br, rows=NULL)
+    
+    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                     just=c("left", "top"), y=0.95, x=0.65)
+    grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+    jj <- grid.legend(c("Predicted Partition Points"
+    ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+    )), vp=vp.r, 
+    draw=TRUE)
+  })
+  observeEvent(input$plot1_MvCheck_file, {
+    curr_num <- as.numeric(input$plot1_MvCheck_file)
+    curr_comp <- paste(curr_num, "-", curr_num, sep="")
+    output$Mv2_file <- renderText({
+      paste(h4(strong((paste(curr_comp)))))
+    })
+    output$Mv_Plotb_file <- renderPlot({
+      image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv2()[[1]])[2],])), 
+                 axes = TRUE, col = inferno(256), 
+                 main = "Local Periodogram",xlab='Time',ylab='Hz',xaxs="i",
+                 bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+      abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
+      vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                        just=c("left", "top"), y=0.55, x=0.65)
+      len <- length(plot.listMv2()[[4]])
+      vals <- plot.listMv2()[[4]]
+      if(len == 0){
+        str <- "(0, 0.5),"
+      } else if (len == 1) {
+        str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+      } else {
+        str <- paste("(0", sep="")
+        for(i in 1:len){
+          str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+        }
+        str <- paste(str, ",", "0.5),", sep="")
+      }
+      spp <- strsplit(str, "),")[[1]]
+      for(a in 1:length(spp)){
+        spp[a] <- paste(spp[a], ")", sep="")
+      }
+      pp <- data.frame(
+        "Predicted Frequency Bands" = spp)
+      colnames(pp) <- c(
+        "Predicted \n Frequency Bands")
+      grid.table(pp, vp=vp.br, rows=NULL)
+      
+      vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                       just=c("left", "top"), y=0.95, x=0.65)
+      grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+      jj <- grid.legend(c("Predicted Partition Points"
+      ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+      )), vp=vp.r, 
+      draw=TRUE)
+    })
+  })
+  output$Plotly_Mvb_file <- renderPlotly({
+    plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
+            x=~plot.listMv2()[[3]][-1],
+            z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                   yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                   zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+  })
+  observeEvent(plot.listMv2()[[11]], {
+    output$Mv_Plotb_file <- renderPlot({
+      image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,1,])), 
+                 axes = TRUE, col = inferno(256), 
+                 main = "Local Periodogram",xlab='Time',ylab='Hz',xaxs="i",
+                 bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
+      abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
+      vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                        just=c("left", "top"), y=0.55, x=0.65)
+      len <- length(plot.listMv2()[[4]])
+      vals <- plot.listMv2()[[4]]
+      if(len == 0){
+        str <- "(0, 0.5),"
+      } else if (len == 1) {
+        str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+      } else {
+        str <- paste("(0", sep="")
+        for(i in 1:len){
+          str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+        }
+        str <- paste(str, ",", "0.5),", sep="")
+      }
+      spp <- strsplit(str, "),")[[1]]
+      for(a in 1:length(spp)){
+        spp[a] <- paste(spp[a], ")", sep="")
+      }
+      pp <- data.frame(
+        "Predicted Frequency Bands" = spp)
+      colnames(pp) <- c(
+        "Predicted \n Frequency Bands")
+      grid.table(pp, vp=vp.br, rows=NULL)
+      
+      vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                       just=c("left", "top"), y=0.95, x=0.65)
+      grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+      jj <- grid.legend(c("Predicted Partition Points"
+      ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+      )), vp=vp.r, 
+      draw=TRUE)
+    })
+    output$Plotly_Mvb_file <- renderPlotly({
+      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
+              x=~plot.listMv2()[[3]][-1],
+              z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                      yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                      zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+    })
+    output$summ_out_Mv_file <- renderPlot({
+      freq <- round(plot.listMv2()[[9]], 3)
+      mod_pval <- plot.listMv2()[[6]]
+      min_pval <- round(plot.listMv2()[[5]], 5)
+      thresh <- round(plot.listMv2()[[8]], 5)
+      Sig <- character(length(min_pval))
+      for(i in 1:length(Sig)){
+        if(min_pval[i] < thresh[i]){
+          Sig[i] <- "TRUE"
+        } else {
+          Sig[i] <- "FALSE"
+        }
+      }
+      res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
+      colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
+      sig <- which(plot.listMv2()[[9]] %in% plot.listMv2()[[4]])
+      res <- res[sig, ]
+      res1 <- tableGrob(res, rows = NULL)
+      title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+      blank9090 <- textGrob(""); blank0909 <- textGrob("")
+      grid.arrange(title, res1, blank0909, ncol = 1)
+    })
+    output$summ_pval_Mv_file <- renderPlot({
+      ggplot() + geom_point(aes(x = as.numeric(plot.listMv2()[[9]]), y = as.numeric(plot.listMv2()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+        xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+        geom_vline(xintercept = plot.listMv2()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
+    })
+  })
+  observeEvent(input$q11_Mv_file, ignoreNULL = TRUE, {
+    curr_num <- as.numeric(input$q11_Mv_file)
+    curr_comp <- paste(curr_num, "-", curr_num, sep="")
+    output$BlankMv_file <- renderText({
+      paste(h4(strong((paste(curr_comp)))))
+    })
+    output$Plotly_Mvb_file <- renderPlotly({
+      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
+              x=~plot.listMv2()[[3]][-1],
+              z=~t(Re(plot.listMv2()[[2]][-1,curr_num + (curr_num-1)*ncol(plot.listMv2()[[1]]),])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                                                                    yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                                                                    zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+    })
+    
+  })
+  
   plot.listFxn2 <- eventReactive(input$go_Fxna,  {
     source("fEBA_Rfns.R")
     Rcpp::sourceCpp("fEBA_072321.cpp")
@@ -1934,6 +2358,9 @@ server <- function(input,output, session) {
     show("plot1_FxnCheck_file")
     show("test12121_AA")
     show("Blank2_file")
+    show("downloadDataFXN1_File")
+    show("summ_out_fxn_file")
+    show("summ_pval_fxn_file")
     #show("Blank10100")
     updateSliderInput(session, "x_F1_AA", min = 1, max=Ts, value=1, step=1)
     #updateSelectInput(session, "q_F1", choices=plot.cmp, selected = plot.cmp[1])
@@ -2033,12 +2460,12 @@ server <- function(input,output, session) {
     blank9090 <- textGrob(""); blank0909 <- textGrob("")
     grid.arrange(blank9090, title, res1, blank0909, ncol = 1)
   })
+  
   output$summ_pval_fxn_file <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listFxn2()[[13]]), y = as.numeric(plot.listFxn2()[[14]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = (plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = (plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
-  
   observeEvent(plot.listFxn2()[[6]],{ 
     output$Fxn_Plotb_file <- renderPlot({
       image.plot(x=plot.listFxn2()[[1]],y=plot.listFxn2()[[2]],z=suppressWarnings(t(Re(plot.listFxn2()[[3]][,"1-1",]))),
@@ -2524,14 +2951,14 @@ server <- function(input,output, session) {
     
     ggplot() + geom_point(aes(x = as.numeric(plot.list()[[8]][,1]), y = as.numeric(plot.list()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = plot.list()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = plot.list()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
   output$summ_pval_uni_file <- renderPlot({
     
     
     ggplot() + geom_point(aes(x = as.numeric(plot.list2()[[8]][,1]), y = as.numeric(plot.list2()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = plot.list2()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1))
+      geom_vline(xintercept = plot.list2()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
   output$downloadData <- downloadHandler(
     filename = function(){
@@ -2668,6 +3095,93 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  output$downloadDataMv1_File <- downloadHandler(
+    filename = function(){
+      paste("Observed_Output_Results","pdf",sep = ".") 
+    },
+    content = function(file){
+      pdf(file, paper = "USr", width = 1100, height=600, onefile = TRUE)
+      par(mar=c(4,4,12,12))
+      vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
+                         just=c( "bottom"), y=0.6, x=0.475)
+      curr_num <- as.numeric(input$plot1_MvCheck_file)
+      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv2()[[1]])[2],])), 
+                   axes = TRUE, col = inferno(256), 
+                   xlab='Time',ylab='Hz',xaxs="i",
+                 bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of Cross-Component", curr_comp), line=0.75)
+        abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
+        vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
+                          just=c("left", "top"), y=0.475, x=0.65)
+        len <- length(plot.listMv2()[[4]])
+        vals <- plot.listMv2()[[4]]
+        if(len == 0){
+          str <- "(0, 0.5),"
+        } else if (len == 1) {
+          str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+        } else {
+          str <- paste("(0", sep="")
+          for(i in 1:len){
+            str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+          }
+          str <- paste(str, ",", "0.5),", sep="")
+        }
+        spp <- strsplit(str, "),")[[1]]
+        for(a in 1:length(spp)){
+          spp[a] <- paste(spp[a], ")", sep="")
+        }
+        pp <- data.frame(
+          "Predicted Frequency Bands" = spp)
+        colnames(pp) <- c(
+          "Predicted \n Frequency Bands")
+        grid.table(pp, vp=vp.br, rows=NULL)
+        
+        vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.5, "npc"), 
+                         just=c("left", "top"), y=0.65, x=0.58)
+        grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+        jj <- grid.legend(c("Predicted Partition Points"
+        ), gp=gpar(lty=1, lwd=3, col=c("skyblue"
+        )), vp=vp.r, 
+        draw=TRUE)
+        get_num <- as.numeric(input$x_Mv_AA)
+        
+        print(ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,get_num]))) +
+            xlab("Time") + ylab("") + ggtitle(paste("Observed Data- Component", get_num)) + theme(plot.title = element_text(face="bold", hjust=0.5)) +
+            scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top)
+        vp.r <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                         y=0.5, x=0.75)
+        vp.l <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
+                         y=0.5, x=0.25)
+        
+        freq <- round(plot.listMv2()[[9]], 3)
+        mod_pval <- plot.listMv2()[[6]]
+        min_pval <- round(plot.listMv2()[[5]], 5)
+        thresh <- round(plot.listMv2()[[8]], 5)
+        Sig <- character(length(min_pval))
+        for(i in 1:length(Sig)){
+          if(min_pval[i] < thresh[i]){
+            Sig[i] <- "TRUE"
+          } else {
+            Sig[i] <- "FALSE"
+          }
+        }
+        res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
+        colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
+        sig <- which(plot.listMv2()[[9]] %in% plot.listMv2()[[4]])
+        res <- res[sig, ]
+        res1 <- tableGrob(res, rows = NULL)
+        title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+        blank9090 <- textGrob(""); blank0909 <- textGrob("")
+        grid.arrange(title, res1, blank0909, ncol = 1, vp=vp.l)
+        
+        print( ggplot() + geom_point(aes(x = as.numeric(plot.listMv2()[[9]]), y = as.numeric(plot.listMv2()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+                 xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+                 geom_vline(xintercept = plot.listMv2()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)), vp=vp.r)
+      dev.off()
+    }
+      
+    
+  )
   output$downloadDataFXN1_File <- downloadHandler(
     filename = function(){
       paste("Observed_Output_Results","pdf",sep = ".") 
@@ -2684,12 +3198,12 @@ server <- function(input,output, session) {
         image.plot(x=plot.listFxn2()[[1]], y=plot.listFxn2()[[2]], z=t(Re(plot.listFxn2()[[3]][,curr_comp,])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i", 
-                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of component", curr_comp), line=0.75)
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of Component", curr_comp), line=0.75)
       } else {
         image.plot(x=plot.listFxn2()[[1]], y=plot.listFxn2()[[2]], z=t(Re(plot.listFxn2()[[3]][,curr_comp,])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i", 
-                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated coherence of component", curr_comp), line = 0.75)
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated Coherence of Component", curr_comp), line = 0.75)
       }
       abline(h=unname(plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), col = "skyblue", lwd=3); 
       
@@ -2726,7 +3240,7 @@ server <- function(input,output, session) {
                         draw=TRUE)
       curr_row <- as.numeric(input$x_F1_AA)
       print( ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listFxn2()[[6]][curr_row,])), y=plot.listFxn2()[[6]][curr_row,])) + 
-               xlab("Functional Domain") + ylab("") + ggtitle(paste("Simulated Data- Timepoint", curr_row)) + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+               xlab("Functional Domain") + ylab("") + ggtitle(paste("Observed Data- Timepoint", curr_row)) + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
                scale_x_continuous(limits = c(0,1), expand=c(0,0)), vp=vp.top)
       #plot.new()
       vp.r <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
@@ -2756,7 +3270,7 @@ server <- function(input,output, session) {
       ###
       print(ggplot() + geom_point(aes(x = as.numeric(plot.listFxn2()[[13]]), y = as.numeric(plot.listFxn2()[[14]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
               xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-              geom_vline(xintercept = unname(plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
+              geom_vline(xintercept = unname(plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)), vp=vp.r)
       
       dev.off()
     }
@@ -2777,12 +3291,12 @@ server <- function(input,output, session) {
         image.plot(x=plot.listF1()[[1]], y=plot.listF1()[[2]], z=t(Re(plot.listF1()[[3]][,curr_comp,])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i", 
-                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of component", curr_comp), line=0.75)
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of Component", curr_comp), line=0.75)
       } else {
         image.plot(x=plot.listF1()[[1]], y=plot.listF1()[[2]], z=t(Re(plot.listF1()[[3]][,curr_comp,])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i", 
-                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated coherence of component", curr_comp), line = 0.75)
+                   bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Estimated Coherence of Component", curr_comp), line = 0.75)
       }
       abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col = "skyblue", lwd=3); 
       if(plot.listF1()[[13]] == "W"){
@@ -2868,7 +3382,7 @@ server <- function(input,output, session) {
       ###
       print(ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
               xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-              geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
+              geom_vline(xintercept = unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)), vp=vp.r)
       
       dev.off()
     }
@@ -2888,7 +3402,7 @@ server <- function(input,output, session) {
         image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv()[[1]])[2],])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i",
-                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525)); title(paste("Local Periodogram of Component", curr_comp), line = 0.75)
+                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525)); title(paste("Multitaper Autospectrum of Cross-Component", curr_comp), line=0.75)
         abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
         if(plot.listMv()[[7]] != 'W'){
           abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
@@ -2984,7 +3498,7 @@ server <- function(input,output, session) {
         grid.arrange(title, res1, blank0909, ncol = 1, vp=vp.l)
         print(ggplot() + geom_point(aes(x = as.numeric(plot.listMv()[[10]]), y = as.numeric(plot.listMv()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
           xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-          geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)), vp=vp.r)
+          geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)), vp=vp.r)
       dev.off()
     }
   )
@@ -3098,7 +3612,7 @@ server <- function(input,output, session) {
       grid.arrange(title, table, title2, test1,blank2, heights = c(0.75,0.75,0.85,0.75, 1) ,nrow = 5,
                    vp = vp.l)
       print (ggplot() + geom_point(aes(x = as.numeric(plot.list2()[[8]][,1]), y = as.numeric(plot.list2()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
-               xlab("Frequency") + ylab("P-Value") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(0,1)) + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+               xlab("Frequency") + ylab("P-Value") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)) + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
                geom_vline(xintercept = plot.list2()[[5]], linetype = "dashed"), vp = vp.r)
       dev.off()
     }
