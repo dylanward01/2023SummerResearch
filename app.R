@@ -1,3 +1,4 @@
+# Load in Necessary Packages
 library(shiny)
 library(momentchi2)
 library(fields)
@@ -14,15 +15,14 @@ library(shinyjs)
 library(fda)
 library(plotly)
 
-
+# Read in Necessary Source Code
 source("EBA_functions.R")
 source("fEBA_Rfns.R")
 Rcpp::sourceCpp("fEBA_072321.cpp")
 source("mEBA_Rfunctions.R")
 Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
-df <- read.csv("xtsample.csv")
-df <- df[[1]]
 
+# Set up Layout for Application
 ui <- fluidPage(
   useShinyjs(),
   tags$h1("Empirical Frequency Band Analysis"),
@@ -36,56 +36,64 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       conditionalPanel(condition = "input.tabselected==1",
-                       radioButtons("type", "Time Series Type", 
+                       radioButtons("type", "Time Series Type", # Selects the type of Simulated Data to look at
                                     choices=c("Univariate","Functional", "Multivariate"), 
                                     selected="Univariate"), 
+                       
+                       # Inputs for Simulated, Univariate Data
                        conditionalPanel(condition = "input.type == 'Univariate'", 
-                       selectInput("Simsetting", "Simulation Setting",
+                       selectInput("Simsetting", "Simulation Setting", # Selects the type of Univariate Data to look at
                                    c("White Noise" = "W",
                                      "Linear" = "L",
                                      "Sinusoidal" = "S"), selected="S"),
                        selectInput(inputId="Time", label = "Choose total length of time series (T)", 
-                                   choices = as.numeric(c(500,1000,5000,10000, 20000, 50000)), selected=1000), 
+                                   choices = as.numeric(c(500,1000,5000,10000, 20000, 50000)), selected=1000), # Sets value for T
                        selectInput(inputId="Num", label = "Choose number of observations per approximately stationary block* (N)", 
-                                   choices=100, selected=100),
+                                   choices=100, selected=100), # Sets value for N
                        selectInput(inputId="Tapers", label="Choose number of tapers to use in multitaper spectral estimator** (K)", 
-                                  choices=10, selected=10),
+                                  choices=10, selected=10), # Sets value for K
                       selectInput(inputId = "Signi", label="Choose significance level", 
-                                  choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
+                                  choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05), # Sets value for alpha
                        radioButtons(inputId = "TF", label = "Standardize", 
-                                    c("True" = TRUE, "False" = FALSE), selected = FALSE),
-                       actionButton("go", label = "Run"),
+                                    c("True" = TRUE, "False" = FALSE), selected = FALSE), # Lets us Standardize the Variance in each block
+                       actionButton("go", label = "Run"), # Runs the Algorithm based on our selected parameters
                       htmlOutput("Res"),
                       htmlOutput("Res1"),
                       ), 
+                      
+                      # Inputs for Simulated, Functional Data
                       conditionalPanel(condition = "input.type== 'Functional'", 
+                                       # Conditionally Displays 3-D Plots
                                        radioButtons("Plot3D", "3D Plots", 
                                                     choices=c("Include","Exclude"), 
                                                     selected="Include"), 
                       selectInput("SimF1", "Simulation Setting",
                                   c("White Noise" = "W",
                                   "Linear" = "L",
-                                  "Sinusoidal" = "S"), selected="S"),
+                                  "Sinusoidal" = "S"), selected="S"), # Selects the type of Functional Data to look at
                       selectInput(inputId = "TsF1", label="Choose total length of time series (T)", 
-                                  choices = c( 500, 1000, 2000, 5000), selected=2000), 
+                                  choices = c( 500, 1000, 2000, 5000), selected=2000), # Sets value for T
                       selectInput(inputId = "RF1", label = "Choose number of points in functional domain (R)", 
-                                  choices=seq(from=5, to=50, by=5), selected=5), 
+                                  choices=seq(from=5, to=50, by=5), selected=5), # Sets value for R
                       selectInput(inputId = "NF1", label = "Choose number of observations per approximately stationary block* (N)",
-                                  choices = 30, selected = 30), 
+                                  choices = 30, selected = 30), # Sets value for N
                       selectInput(inputId = "KF1", label = "Choose number of tapers to use in multitaper spectral estimator** (K)", 
-                                  choices = 5, selected = 5),
+                                  choices = 5, selected = 5), # Sets value for K
                       selectInput(inputId = "RselF1", label = "Choose number of points in the functional domain to use in computing test statistics*** (Rsel)", 
-                                  choices = c(5,10), selected = 5), 
+                                  choices = c(5,10), selected = 5), # Sets value for RSel
                       selectInput(inputId = "AlphaF1", label="Choose significance level", 
-                                  choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
+                                  choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05), # Sets value for alpha
                       radioButtons(inputId = "TF_F1", label = "Standardize", 
-                                   c("True" = TRUE, "False" = FALSE), selected = FALSE),
-                      actionButton("goF1", label = "Run \n (Warning: The Algorithm will take a while to run)"),
+                                   c("True" = TRUE, "False" = FALSE), selected = FALSE), # Lets us Standardize the Variance in each block
+                      actionButton("goF1", label = "Run \n (Warning: The Algorithm will take a while to run)"), # Runs the Algorithm based on our selected parameters
                       htmlOutput("F1_1"),
                       htmlOutput("F1_2"),
                       htmlOutput("F1_3")
                       ),
+                      
+                      # Inputs for Simulated, Multivariate Data
                       conditionalPanel(condition="input.type == 'Multivariate'",
+                                       # Conditionally Displays 3-D Plots
                                        radioButtons("Plot3DM", "3D Plots", 
                                                     choices=c("Include","Exclude"), 
                                                     selected="Include"),
@@ -94,16 +102,16 @@ ui <- fluidPage(
                                     "Linear" = "L",
                                     "Sinusoidal" = "S",
                                     "Linear and Sinusoidal (Mixture)" = "LASM",
-                                    "Linear and Sinusoidal (Differing Proportions)" = "LASDP"), selected="S"),
+                                    "Linear and Sinusoidal (Differing Proportions)" = "LASDP"), selected="S"), # Selects the type of Multivariate Data to look at
                       selectInput(inputId = "TsMv", label="Choose total length of time series (T)", 
-                                  choices = c( 200, 500, 1000, 2000, 5000), selected=200), 
+                                  choices = c( 200, 500, 1000, 2000, 5000), selected=200), # Sets value for T
                       selectInput(inputId = "RMv", label = "Choose the number of components (R)", 
-                                  choices=seq(from=5, to=50, by=5), selected=10),
+                                  choices=seq(from=5, to=50, by=5), selected=10), # Sets value for R
                       selectInput(inputId = "nrepMv", label="Choose the number of repetitions (nrep)",
-                                  choices=c(100,500,1000,2000), selected=1000),
+                                  choices=c(100,500,1000,2000), selected=1000),# Sets value for nrep
                       selectInput(inputId = "WselMv", label="Choose the number of different neighborhood pairings to test (Wsel)",
-                                  choices=c(1,2,3,4,5), selected=3),
-                      actionButton("goMv", label = "Run"),
+                                  choices=c(1,2,3,4,5), selected=3), # Sets value for Wsel
+                      actionButton("goMv", label = "Run"), # Runs the Algorithm based on our selected parameters
                       htmlOutput("Check111"),
                       )),
       
@@ -114,47 +122,68 @@ ui <- fluidPage(
                                             "text/comma-separated-values,text/plain",
                                             ".csv")),
                        checkboxInput("header", "Header", TRUE),
+                       
                        htmlOutput("UniVarDis"),
                        htmlOutput("NotUniVar"),
                        htmlOutput("BlankSpace"),
+                       
+                       # This will pop up if the data chosen has more than one component, letting the user choose what type
+                       # of data is being inputted
                        hidden(radioButtons(inputId = "Data_Checker", label = NULL, choices = c("Functional", "Multivariate"), selected=character(0))),
+                       
+                       # These below buttons will choose whether or not the 3D Plots are displayed, if we have either functional
+                       # or multivariate data
                        hidden(radioButtons("Plot3D_File", "3D Plots", 
                                     choices=c("Include","Exclude"), 
                                     selected="Include")),
                        hidden(radioButtons("Plot3D_FileM", "3D Plots", 
                                            choices=c("Include","Exclude"), 
                                            selected="Include")),
+                       
+                       
+                       # These 3 outputs correspond to each of the types of data we could analyze, and gives the length/dimensions
+                       # of the inputted data
                        htmlOutput("T_len"),
                        hidden(htmlOutput("Ts_Fxn_Dim")),
                        hidden(htmlOutput("Ts_Mv_Dim")),
+                       
+                       # Inputs for Observed, Univariate Data
                        numericInput(inputId = "Num2", label = "Choose number of observations per approximately stationary block* (N)", 
-                                   value = NULL, step = 1),
-                       
+                                   value = NULL, step = 1), # Sets value for N
                        numericInput(inputId = "Tapers2", label = "Choose number of tapers to use in multitaper spectral estimator** (K)", 
-                                   value = NULL, step = 1),
-                       
+                                   value = NULL, step = 1), # Sets value for K
                        selectInput(inputId = "Signi2", label="Choose significance level", 
-                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05),
-                       
+                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05), # Sets value for alpha
                        radioButtons(inputId = "TF2", label = "Standardize", 
-                                    c("True" = TRUE, "False" = FALSE), selected = FALSE),
+                                    c("True" = TRUE, "False" = FALSE), selected = FALSE), # Lets us Standardize the Variance in each block
+                       
+                       # Inputs for Observed, Functional Data
+                       
+                       # These are hidden, until it is selected that the inputted data is Functional. At that point, these will show, and the other 
+                       # chunks of inputs will be hidden
                        hidden(numericInput(inputId = "Num_Fxna", label = "Choose number of observations per approximately stationary block* (N)", 
-                                           value = NULL, step = 1)),
+                                           value = NULL, step = 1)), # Sets value for N
                        hidden(numericInput(inputId = "Tapers_Fxna", label = "Choose number of tapers to use in multitaper spectral estimator** (K)", 
-                                           value = NULL, step = 1)),
+                                           value = NULL, step = 1)), # Sets value for K
                        hidden(selectInput(inputId = "Rsel_Fxna", label = "Choose number of points in the functional domain to use in computing test statistics*** (Rsel)", 
-                                          choices = c(5,10), selected = 5)),
+                                          choices = c(5,10), selected = 5)), # Sets value for Rsel
                        hidden(selectInput(inputId = "Signi_Fxna", label="Choose significance level", 
-                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05)),
+                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05)), # Sets value for alpha
                        hidden(radioButtons(inputId = "TF_Fxna", label = "Standardize", 
-                                    c("True" = TRUE, "False" = FALSE), selected = FALSE)),
-                       hidden(actionButton("go_Fxna", label = "Run")),
+                                    c("True" = TRUE, "False" = FALSE), selected = FALSE)), # Lets us Standardize the Variance in each block
+                       hidden(actionButton("go_Fxna", label = "Run")), # Runs the Functional Algorithm based on our selected parameters
+                       
+                       # Inputs for Observed, Multivariate Data
+                       
+                       # These are hidden, until it is selected that the inputted data is Multivariate At that point, these will show, and the other 
+                       # chunks of inputs will be hidden
                        hidden(selectInput(inputId = "nrepMv_file", label="Choose the number of repetitions (nrep)",
-                                   choices=c(100,500,1000,2000), selected=1000)),
+                                   choices=c(100,500,1000,2000), selected=1000)), # Sets value for nrep
                        hidden(selectInput(inputId = "WselMv_file", label="Choose the number of different neighborhood pairings to test (Wsel)",
-                                   choices=c(1,2,3,4,5), selected=3)),
-                       hidden(actionButton("go_Mva", label= "Run")),
-                       actionButton("go2", label = "Run"), 
+                                   choices=c(1,2,3,4,5), selected=3)), # Sets value for Wsel
+                       hidden(actionButton("go_Mva", label= "Run")), # Runs the Multivariate Algorithm based on our selected parameters
+                       
+                       actionButton("go2", label = "Run"), # Runs the Univariate Algorithm based on our selected parameters
                        htmlOutput("res9"),
                        htmlOutput("res10"),
                        hidden(htmlOutput("Fxn_AA")),
@@ -167,22 +196,27 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(type = "tabs", id = 'tabselected', selected = 1,
                   tabPanel("Simulation Setting", value = 1),
-                  tabPanel("File Upload", value = 2)),
-      conditionalPanel(condition = "input.tabselected==1",
+                  tabPanel("File Upload", value = 2)), # Conditionally displays either the Simulated or File Upload sides of the app
+      conditionalPanel(condition = "input.tabselected==1", # This corresponds to the Simulated Side of the app
+                       
+                       # Outputs for Simulated, Univariate Data
                        conditionalPanel(condition = "input.type == 'Univariate'",
-                       plotOutput("Image_Plot", height=1000, width=1000),
+                       plotOutput("Image_Plot", height=1000, width=1000), # Plots Time Series and Local periodogram
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_uni", height = 500, width = 500))
+                         column(width = 5, plotOutput("summ_out_uni", height = 500, width=500)), # Tables of Results for partition testing
+                         column(width = 5, plotOutput("summ_pval_uni", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                        ),
-                       downloadButton('downloadData','Download the Above Results') ,
+                       downloadButton('downloadData','Download the Above Results') , # Downloads the plots seen into a pdf
                        br(),
                        br(),
                        ),
                        
+                       # Outputs for Simulated, Functional Data
                        conditionalPanel(condition = "input.type == 'Functional'",
-                       plotlyOutput("Fxn_Plota", height=400, width=1000),
+                       plotlyOutput("Fxn_Plota", height=400, width=1000), # Plots Data
+                       
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                       # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6,  htmlOutput("FxnPlotaDesc") ),
                                 column(width=4, hidden(htmlOutput("test12121"))),
                                 column(width=2, hidden(sliderInput(inputId = "x_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
@@ -190,8 +224,11 @@ ui <- fluidPage(
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                       plotOutput("Fxn_Plotb", height=600, width = 1000), 
+                       
+                       plotOutput("Fxn_Plotb", height=600, width = 1000), # Plots Local periodogram
+                       
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                       # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6,  htmlOutput("FxnbPlotDesc") ),
                                 column(width=4, htmlOutput("Blank2")),
                                 column(width=2, hidden(sliderInput("plot1_FxnCheck",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
@@ -199,27 +236,33 @@ ui <- fluidPage(
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
+                       
                        conditionalPanel(condition = "input.Plot3D == 'Include'",
-                       plotlyOutput("Plotly_Fxna", height=600, width=1000),
-                       plotlyOutput("Plotly_Fxnb", height=600, width=1000), 
+                       plotlyOutput("Plotly_Fxna", height=600, width=1000), # 3-D Plot of entire data
+                       plotlyOutput("Plotly_Fxnb", height=600, width=1000), # 3-D Plot of local periodogram
+                       
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6, htmlOutput("FxnPlot22Desc") ),
                                 column(width=4, htmlOutput("Blank10100")),
                                 column(width=2, hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
                        ), 
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_fxn", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_fxn", height = 500, width = 500))
+                         column(width = 5, plotOutput("summ_out_fxn", height = 500, width=500)), # Tables of Results for partition testing
+                         column(width = 5, plotOutput("summ_pval_fxn", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                        ), 
-                       downloadButton('downloadDataFXN1','Download the Above Results'),
+                       downloadButton('downloadDataFXN1','Download the Above Results'), # Downloads the plots seen into a pdf
                        br(),
                        br(),
                        ),
                        
+                       # Outputs for Simulated, Multivariate Data
                        conditionalPanel(condition = "input.type == 'Multivariate'",
-                       plotlyOutput("Mv_Plota", height=400, width=1000),
+                       plotlyOutput("Mv_Plota", height=400, width=1000), # Plots Data
+                       
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6,  htmlOutput("MvPlotaDesc") ),
                                 column(width=4, hidden(htmlOutput("mv_testa"))),
                                 column(width=2, hidden(sliderInput(inputId = "mvX_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
@@ -228,43 +271,50 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                        
-                       plotOutput("Mv_Plotb", height=600, width = 1000), 
+                       plotOutput("Mv_Plotb", height=600, width = 1000), # Plots Local periodogram
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6,  htmlOutput("MvbPlotDesc") ),
                                 column(width=4, hidden(htmlOutput("mv_testb"))),
                                 column(width=2, hidden(sliderInput("mvX_F2",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
                        ),
                        conditionalPanel(condition = "input.Plot3DM == 'Include'",
-                       plotlyOutput("Plotly_Mvb", height=600, width=1000), 
+                       plotlyOutput("Plotly_Mvb", height=600, width=1000), # 3-D Plot of Local periodogram
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                 column(width=6,  htmlOutput("MvPlot22Desc") ),
                                 column(width=4, hidden(htmlOutput("Mv_10100"))),
                                 column(width=2, hidden(sliderInput(inputId = "q11_Mv1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
                        )
                        ),
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_Mv", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_Mv", height = 500, width = 500))
+                         column(width = 5, plotOutput("summ_out_Mv", height = 500, width=500)), # Tables of Results for partition testing
+                         column(width = 5, plotOutput("summ_pval_Mv", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                        ), 
                        
-                       downloadButton('downloadDataMV1','Download the Above Results'),
+                       downloadButton('downloadDataMV1','Download the Above Results'), # Downloads the plots seen into a pdf
                        br(),
                        br(),
       )),
-      conditionalPanel(condition = "input.tabselected==2",
-                       plotOutput("Image_Plota", height=400, width=1000),
-                       plotOutput("Image_Plot2", height=600, width=1000), 
+      conditionalPanel(condition = "input.tabselected==2", # This corresponds to the File Upload side of the app
+                       
+                       # Outputs for Observed, Univariate Data
+                       plotOutput("Image_Plota", height=400, width=1000), # Plots data
+                       plotOutput("Image_Plot2", height=600, width=1000), # Plots local periodogram
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni_file", height = 500, width=500)), 
-                         column(width = 5, plotOutput("summ_pval_uni_file", height = 500, width = 500)), 
-                         #column(width = 4, dataTableOutput("summ_flat_uni"))
+                         column(width = 5, plotOutput("summ_out_uni_file", height = 500, width=500)), # Table of Results for partition testing
+                         column(width = 5, plotOutput("summ_pval_uni_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                        ),
-                       downloadButton('downloadData1','Download the Above Results'),
+                       downloadButton('downloadData1','Download the Above Results'), # Downloads the plots seen into a pdf
                        br(),
                        br(),
+                       
+                       # Outputs for Observed, Functional Data
                        conditionalPanel(condition = "input.Data_Checker== 'Functional'", 
-                                        plotlyOutput("Test_Fxna_Plot1", width=1000), 
+                                        plotlyOutput("Test_Fxna_Plot1", width=1000), # Plots the data
+                                        
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                          # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                           column(width=6,  htmlOutput("FxnPlotaDesc_AA") ),
                                           column(width=4, htmlOutput("test12121_AA")),
                                           column(width=2, sliderInput(inputId = "x_F1_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
@@ -272,8 +322,10 @@ ui <- fluidPage(
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                                        plotOutput("Fxn_Plotb_file", height=600, width=1000), 
+                                        
+                                        plotOutput("Fxn_Plotb_file", height=600, width=1000), # Plots Local periodogram
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                                  column(width=6,  htmlOutput("FxnbPlotDesc_file") ),
                                                  column(width=4, htmlOutput("Blank2_file")),
                                                  column(width=2, sliderInput("plot1_FxnCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE))
@@ -282,9 +334,11 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                                         conditionalPanel(condition = "input.Plot3D_File == 'Include'",
-                                        plotlyOutput("Plotly_Fxna_file", height=600, width=1000),
-                                        plotlyOutput("Plotly_Fxnb_file", height=600, width=1000), 
+                                        plotlyOutput("Plotly_Fxna_file", height=600, width=1000), # 3-D Plot of Entire Data
+                                        plotlyOutput("Plotly_Fxnb_file", height=600, width=1000), # 3-D Plot of Local periodogram
+                                        
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                                  column(width=6,  htmlOutput("FxnPlot22Desc_file") ),
                                                  column(width=4, htmlOutput("Blank10100_file")),
                                                  column(width=2, sliderInput(inputId = "q11_F1_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE))
@@ -292,18 +346,20 @@ ui <- fluidPage(
                                         
                                         ),
                                         fluidRow(
-                                          column(width = 5, plotOutput("summ_out_fxn_file", height = 500, width=500)), 
-                                          column(width = 5, plotOutput("summ_pval_fxn_file", height = 500, width = 500)), 
-                                          #column(width = 4, dataTableOutput("summ_flat_uni"))
+                                          column(width = 5, plotOutput("summ_out_fxn_file", height = 500, width=500)), # Table of Results for Partition Testing
+                                          column(width = 5, plotOutput("summ_pval_fxn_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                                         ), 
-                                        downloadButton('downloadDataFXN1_File','Download the Above Results'),
+                                        downloadButton('downloadDataFXN1_File','Download the Above Results'), # Downloads the plots seen into a pdf
                                         br(),
                                         br()
                                         
                        ), 
+                       
+                       # Output for Observed, Multivariate Data
                        conditionalPanel(condition = "input.Data_Checker == 'Multivariate'",
-                                        plotlyOutput("Test_Mva_Plot1", width=1000), 
+                                        plotlyOutput("Test_Mva_Plot1", width=1000), # Plots the data
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                                  column(width=6,  htmlOutput("MvPlotaDesc_AA") ),
                                                  column(width=4, htmlOutput("Mv12121_AA")),
                                                  column(width=2, sliderInput(inputId = "x_Mv_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
@@ -311,8 +367,9 @@ ui <- fluidPage(
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
                                                  }' ))),
-                                        plotOutput("Mv_Plotb_file", height=600, width=1000),
+                                        plotOutput("Mv_Plotb_file", height=600, width=1000), # Plots Local periodogram
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                                  column(width=6,  htmlOutput("MvbPlotDesc_file") ),
                                                  column(width=4, hidden(htmlOutput("Mv2_file"))),
                                                  column(width=2, hidden(sliderInput("plot1_MvCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
@@ -321,8 +378,9 @@ ui <- fluidPage(
                                                  visibility: hidden !important;
                                                  }' ))),
                                         conditionalPanel(condition = "input.Plot3D_FileM == 'Include'",
-                                                         plotlyOutput("Plotly_Mvb_file", height=600, width=1000),
+                                                         plotlyOutput("Plotly_Mvb_file", height=600, width=1000), # 3-D Plot of Local Periodogram
                                                          fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
+                                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
                                                                   column(width=6,  htmlOutput("MvPlot22Desc_file") ),
                                                                   column(width=4, hidden(htmlOutput("BlankMv_file"))),
                                                                   column(width=2, hidden(sliderInput(inputId = "q11_Mv_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE)))
@@ -330,11 +388,10 @@ ui <- fluidPage(
 
                                         ),
                                         fluidRow(
-                                          column(width = 5, plotOutput("summ_out_Mv_file", height = 500, width=500)),
-                                          column(width = 5, plotOutput("summ_pval_Mv_file", height = 500, width = 500)),
-                                          #column(width = 4, dataTableOutput("summ_flat_uni"))
+                                          column(width = 5, plotOutput("summ_out_Mv_file", height = 500, width=500)), # Table of Results for Partition Testing
+                                          column(width = 5, plotOutput("summ_pval_Mv_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
                                         ),
-                                        downloadButton('downloadDataMv1_File','Download the Above Results'),
+                                        downloadButton('downloadDataMv1_File','Download the Above Results'), # Downloads the plots seen into a pdf
                                         br(),
                                         br()
                                         )
@@ -342,11 +399,14 @@ ui <- fluidPage(
       )
   ))
 
+# This houses all of the code that will produce the above plots and results 
 server <- function(input,output, session) {
   
   output$BlankSpace <- renderText({
     paste("\n")
   })
+  
+  # Ensures that Rsel will never be greater than R in the Simulated, Functional portion
   observe({
     RF1 <- as.numeric(input$RF1)
     if(RF1 == 5){
@@ -355,21 +415,8 @@ server <- function(input,output, session) {
       updateSelectInput(session, "RselF1", choices=c(5, 10), selected=5)
     }
   })
-  observe({
-    TF1 <- as.numeric(input$TsF1)
-    new_vals <- floor(seq(from=30, to=TF1, length.out = 20))
-    updateSelectInput(session, "NF1", choices=new_vals, selected=new_vals[2])
-    
-  })
-  observe({
-    NF1 <- as.numeric(input$NF1)
-    if(is.na(NF1)){ 
-    } else {
-      new_vals <- floor(seq(from=1, to=floor(NF1/4 - 1), length.out = 5))
-      updateSelectInput(session, "KF1", choices = new_vals, selected=new_vals[3])  
-    }
-    
-  })
+  
+  # Generates possible values for N, based on T in the Simulated, Functional Portion
   observe({
     t2 <- as.numeric(input$TsF1)
     if(t2 == 500) {
@@ -387,6 +434,8 @@ server <- function(input,output, session) {
     }
     updateSelectInput(session, "NF1", choices = choices, selected = choices[length(choices) - 1])
   })
+  
+  # Generates possible values for K, based on N in the Simulated, Functional Portion
   observe({
     t2 <- as.numeric(input$TsF1)
     sc_val <- (as.numeric(input$NF1))
@@ -439,6 +488,8 @@ server <- function(input,output, session) {
     }
     updateSelectInput(session, "KF1",choices=tap, selected = tap[1])
   })
+  
+  # Generates possible values for N, based on T in the Simulated, Univariate Portion
   observe({
     t2 <- as.numeric(input$Time)
     if(t2 == 500) {
@@ -456,6 +507,8 @@ server <- function(input,output, session) {
     }
     updateSelectInput(session, "Num", choices = choices, selected = choices[length(choices) - 1])
   })
+  
+  # Generates possible values for K, based on N in the Simulated, Univariate Portion
   observe({
     t2 <- as.numeric(input$Time)
     sc_val <- (as.numeric(input$Num))
@@ -508,6 +561,9 @@ server <- function(input,output, session) {
     }
     updateSelectInput(session, "Tapers",choices=tap, selected = tap[1])
   })
+  
+  # The below renderText blocks serve to indicate the possible valid values that can be selected on the Simulated Side
+  # of the application
   output$Res <- renderText({
     paste(h6("*Choices are T", HTML(paste(tags$sup("1/2"))), ", T", HTML(paste(tags$sup("2/3"), 
                   ", or T", HTML(paste(tags$sup("3/4"), ", provided it satisfies 30", HTML("&le;"), 
@@ -518,9 +574,6 @@ server <- function(input,output, session) {
                    ", provided it satisfies ", HTML(paste(tags$sup("floor(N/2)"))), 
                                      "/", HTML(paste(tags$sub(2))), " - 1> floor((K+1)(", HTML(paste(tags$sup("N"))), 
                                      "/", HTML(paste(tags$sub("N+1"))), "))"))))
-  })
-  output$res9 <- renderText({
-    paste("*Please enter a dataframe")
   })
   output$F1_1 <- renderText({
     paste(h6("*Choices are T", HTML(paste(tags$sup("1/2"))), ", T", HTML(paste(tags$sup("2/3"))),
@@ -533,46 +586,21 @@ server <- function(input,output, session) {
   output$F1_3 <- renderText({
     paste(h6("***Choices are 5, or 10, provided it satisfies 1 ", HTML("&le;"), "Rsel", HTML("&le;"), "R"))
   })
-  Freq_domain_vals <- eventReactive(input$RF1, {
-    R_val <- as.numeric(input$RF1)
-    domain <- numeric(0)
-    if(is.na(R_val)){
-      
-    } else if(R_val == 5){
-      domain <- c(1, 3, 5)
-      nums <- seq(1:5)
-      ifelse(domain %in% nums, domain, " ")
-    } else if (R_val == 10){
-      domain <- c(1, 3, 5, 7, 10)
-    }else if (R_val == 15){
-      domain <- c(1, 3, 5, 7, 10, 13, 15)
-    }else if (R_val == 20){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20)
-    }else if (R_val == 25){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25)
-    }else if (R_val == 30){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25, 27, 30)
-    }else if (R_val == 35){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25, 27, 30, 33, 35)
-    }else if (R_val == 40){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25, 27, 30, 33, 35, 37, 40)
-    }else if (R_val == 45){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25, 27, 30, 33, 35, 37, 40, 43, 45)
-    }else if (R_val == 50){
-      domain <- c(1, 3, 5, 7, 10, 13, 15, 17, 20, 23, 25, 27, 30, 33, 35, 37, 40, 43, 45, 47, 50)
-    }
-    (list("domain" = domain))
+  
+  output$res9 <- renderText({
+    paste("*Please enter a dataframe")
   })
   
+  
   #######################################################
-  ## Event Reactive Block Start point for Multivariate ##
+  ## Event Reactive Block Start point for the Simulated 
+  ## Multivariate algorithm
   #######################################################
-  # Note: Later change idx to vary from 1 to R.
+ 
   
   plot.listMv <- eventReactive(input$goMv, ignoreNULL = TRUE, {
     source("mEBA_Rfunctions.R")
     Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
-    print('Assign')
     t = as.numeric(input$TsMv); #Length of Time Series
     R = as.numeric(input$RMv); #Number of Components
     nrep = as.numeric(input$nrepMv)
@@ -590,13 +618,11 @@ server <- function(input,output, session) {
         X.wn[,m] <- meba.simdata(t)$wn;
       }
       
-      #plot series 
       
-      #compute and plot local periodogram and demeaned local periodogram
+      #compute and plot local periodogram 
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.wn,N,stdz=FALSE);
-      gpse <- ghat(pse);
       
       b.out=msboot(nrep=nrep, X.wn, Wsel=Wsel, stdz=FALSE, ncore=1)
       
@@ -631,7 +657,6 @@ server <- function(input,output, session) {
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.s3b,N,stdz=FALSE);
-      gpse <- ghat(pse);
       
       b.out=msboot(nrep=nrep, X.s3b, Wsel=Wsel, stdz=FALSE, ncore=1)
 
@@ -662,7 +687,6 @@ server <- function(input,output, session) {
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.l3b,N,stdz=FALSE);
-      gpse <- ghat(pse);
       
       b.out=msboot(nrep=nrep, X.l3b, Wsel=Wsel, stdz=FALSE, ncore=1)
       
@@ -696,7 +720,6 @@ server <- function(input,output, session) {
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b1,N,stdz=FALSE);
-      gpse <- ghat(pse);
       
       b.out=msboot(nrep=nrep, X.m3b1, Wsel=Wsel, stdz=FALSE, ncore=1)
       
@@ -734,7 +757,6 @@ server <- function(input,output, session) {
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b2,N,stdz=FALSE);
-      gpse <- ghat(pse);
       
       b.out=msboot(nrep=nrep, X.m3b2, Wsel=Wsel, stdz=FALSE, ncore=1)
       
@@ -749,6 +771,12 @@ server <- function(input,output, session) {
     else{
       print('Error in Multivariate')
     }
+    
+    #################################################
+    ## Start - Gather Results from Algorithm, to display in 
+    ## aforementioned plots
+    #################################################
+    
     method <- b.out
     vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
     indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
@@ -781,9 +809,21 @@ server <- function(input,output, session) {
     uni_fre <- unique(fre)
     sim_type <- input$SimSettingM
     dimnames(pse) <- list(freq,apply(expand.grid(1:R,1:R),1,paste,collapse = "-"),1:t);
+    comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
     conf <- numeric(length(pse))
     dim(conf) <- dim(pse)
     dimnames(conf) <- dimnames(pse)
+    
+    #################################################
+    ## End - Gather Results from Algorithm, to display in 
+    ## aforementioned plots
+    #################################################
+    
+    #################################################
+    ## Start - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
+    
     for(k in 1:dim(pse)[3]){
       for(j in 1:dim(pse)[2]){
         first_col <- ((j - 1) %% (as.numeric(R))) + 1 
@@ -799,13 +839,16 @@ server <- function(input,output, session) {
         }
       }
     }
-    comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
-    #output$Mv_Plota <- renderPlotly({
-    #  a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
-    #    xlab("Multivariate") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-    #    scale_x_continuous(limits=c(0,1), expand=c(0,0))
-    #  ggplotly(a)
-    #})
+    
+    #################################################
+    ## End - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
+    
+    #################################################
+    ## Start - Show and Update Sliders and Descriptors,
+    ## and store important values for future use
+    #################################################
     
     show("mv_testa")
     show("mvX_F1")
@@ -837,8 +880,16 @@ server <- function(input,output, session) {
     list(X = X, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
          sim_type = sim_type, comp_names = comp_names, thresh_bounds = thresh_bounds, 
          tested_freq = uni_fre, indexes=indexes)
+    #################################################
+    ## End - Show and Update Sliders and Descriptors,
+    ## and store important values for future use
+    #################################################
   })
   
+  #################################################
+  ## Start - Initialize a plot, on the first component
+  ## of the simulated, multivariate data
+  #################################################
   
   output$Mv_Plota <- renderPlotly({
     a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listMv()[[1]][,1])), y=plot.listMv()[[1]][,1])) + 
@@ -846,6 +897,16 @@ server <- function(input,output, session) {
       scale_x_continuous(limits=c(0,1), expand=c(0,0))
     ggplotly(a)
   })
+  
+  #################################################
+  ## End - Initialize a plot, on the first component
+  ## of the simulated, multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Initialize a plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
   
   output$Mv_Plotb <- renderPlot({
     image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,1,])), 
@@ -913,6 +974,16 @@ server <- function(input,output, session) {
                       draw=TRUE)
   })
   
+  #################################################
+  ## End - Initialize a plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Update plot on Simulated Multivariate
+  ## data, to display the component selected via the slider
+  #################################################
+  
   observeEvent(input$mvX_F1, ignoreNULL = FALSE, {
     curr_col <- as.numeric(input$mvX_F1)
     output$mv_testa <- renderText({
@@ -930,6 +1001,16 @@ server <- function(input,output, session) {
     }
     
   })
+  
+  #################################################
+  ## End - Update plot on Simulated Multivariate
+  ## data, to display the component selected via the slider
+  #################################################
+  
+  #################################################
+  ## Start - Update plot on local Periodogram of 
+  ## Simulated Multivariate data, to selected component
+  #################################################
   
   observeEvent(input$mvX_F2, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$mvX_F2)
@@ -1081,6 +1162,15 @@ server <- function(input,output, session) {
     
   })
   
+  #################################################
+  ## End - Update plot on local Periodogram of 
+  ## Simulated Multivariate data, to selected component
+  #################################################
+  
+  #################################################
+  ## Start - Initialize a 3-D plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
   
   output$Plotly_Mvb <- renderPlotly({
     plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
@@ -1089,6 +1179,16 @@ server <- function(input,output, session) {
                                                                                                      yaxis = list(title="Timepoint", range=c(0,1)), 
                                                                                                      zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
   })
+  
+  #################################################
+  ## End - Initialize a 3-D plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Update our 3-D plot of the local periodogram
+  ## of our selected Component in our simulated multivariate data
+  #################################################
   
   observeEvent(input$q11_Mv1, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$q11_Mv1)
@@ -1105,6 +1205,16 @@ server <- function(input,output, session) {
     })
     
   })
+  
+  #################################################
+  ## End - Update our 3-D plot of the local periodogram
+  ## of our selected Component in our simulated multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Display Table containing results on 
+  ## partition testing for Simulated, Multivariate Data
+  #################################################
   
   output$summ_out_Mv <- renderPlot({
     freq <- round(plot.listMv()[[10]], 3)
@@ -1128,15 +1238,37 @@ server <- function(input,output, session) {
     blank9090 <- textGrob(""); blank0909 <- textGrob("")
     grid.arrange(title, res1, blank0909, ncol = 1)
   })
+  
+  #################################################
+  ## End - Display Table containing results on 
+  ## partition testing for Simulated, Multivariate Data
+  #################################################
+  
+  #################################################
+  ## Start - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Multivariate data at each frequency
+  #################################################
+  
   output$summ_pval_Mv <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listMv()[[10]]), y = as.numeric(plot.listMv()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
       geom_vline(xintercept = plot.listMv()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
   
-  #####################################################
-  ## Event Reactive Block End point for Multivariate ##
-  #####################################################
+  #################################################
+  ## End - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Multivariate data at each frequency
+  #################################################
+  
+  #######################################################
+  ## Event Reactive Block End point for the Simulated 
+  ## Multivariate algorithm
+  #######################################################
+  
+  #######################################################
+  ## Event Reactive Block Start point for the Simulated 
+  ## Functional algorithm
+  #######################################################
   
   plot.listF1 <- eventReactive(input$goF1, ignoreNULL = TRUE, {
     source("fEBA_Rfns.R")
@@ -1155,6 +1287,10 @@ server <- function(input,output, session) {
     freq=seq(from=0,by=1/N,length.out=floor(N/2)+1); #Fourier frequencies
     Rsel=as.numeric(input$RselF1); #number of points in functional domain used for test statistics
     
+    #################################################################
+    ## Start - Data Processing for White Noise Data ##
+    #################################################################
+    
     if (input$SimF1 == "W"){
       X=fws.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
       pse=fhat(X,N,K,Rsel,std);
@@ -1165,6 +1301,13 @@ server <- function(input,output, session) {
        plot.cmp <- apply(expand.grid(1:Rsel,1:Rsel),1,paste,collapse = "-")
        plot.main <- "Multitaper Autospectrum"; plot.data = X
      
+       #################################################################
+       ## End - Data Processing for White Noise Data ##
+       #################################################################
+       
+       #################################################################
+       ## Start - Data Processing for Linear Data ##
+       #################################################################
       
     } else if (input$SimF1 == "L") {
       X=f3bL.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
@@ -1175,7 +1318,14 @@ server <- function(input,output, session) {
        plot.cmp <- apply(expand.grid(1:Rsel,1:Rsel),1,paste,collapse = "-")
        plot.main <- "Multitaper Autospectrum"; plot.data = X
        
-      
+       #################################################################
+       ## End - Data Processing for Linear Data ##
+       #################################################################
+       
+       #################################################################
+       ## Start - Data Processing for Sinusoidal Data ##
+       #################################################################
+       
     } else if (input$SimF1 == "S") {
       X=f3bS.sim(nb=nb,gsz=R,Ts=Ts,seed=seed);
        pse=fhat(X,N,K,Rsel,std);
@@ -1185,7 +1335,15 @@ server <- function(input,output, session) {
        plot.cmp <- apply(expand.grid(1:Rsel,1:Rsel),1,paste,collapse = "-")
        plot.main <- "Multitaper Autospectrum"; plot.data = X
        
+       #################################################################
+       ## End - Data Processing for Sinusoidal Data ##
+       #################################################################
     }
+    
+    #################################################################
+    ## Start - Algorithm Execution based on aforementioned data ##
+    #################################################################
+    
     set.seed(47)
     ndraw=100000; #number of draws from Gaussian process for approximating p-values
     blockdiag=TRUE; #use block diagonal covariance matrix approximation
@@ -1198,17 +1356,30 @@ server <- function(input,output, session) {
               unlist(lapply(res$log, function(x) x$Qint)),
               unlist(lapply(res$log, function(x) x$Qpv[,'Qint'])));
     tmp=tmp[!duplicated(tmp[,1]),];
-    #plot(tmp[,1],tmp[,2],
-    #     type="l",xlab='Hz',ylab='Qint');
-    #plot(tmp[,1],tmp[,3],
-    #     type="l",xlab='Hz',ylab='p-value',ylim=c(0,1));
     
+    #################################################################
+    ## End - Algorithm Execution based on aforementioned data ##
+    #################################################################
+    
+    #################################################################
+    ## Start - Initialize Plot for first timepoint of our simulated 
+    ## Functional data 
+    #################################################################
     output$Fxn_Plota <- renderPlotly({
          a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(X[1,])), y=X[1,])) + 
            xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
            scale_x_continuous(limits=c(0,1), expand=c(0,0))
          ggplotly(a)
        })
+    #################################################################
+    ## End - Initialize Plot for first timepoint of our simulated 
+    ## Functional data 
+    #################################################################
+    
+    #################################################
+    ## Start - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
     conf <- numeric(length(pse))
     dim(conf) <- dim(pse)
     dimnames(conf) <- dimnames(pse)
@@ -1228,6 +1399,16 @@ server <- function(input,output, session) {
       }
     }
     plot.z <- conf
+    
+    #################################################
+    ## End - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
+    
+    #################################################
+    ## Start - Show and Update Sliders and Descriptors,
+    ## and store important values for future use
+    #################################################
     
     output$FxnPlotaDesc <- renderText({
       paste(h4("Currently viewing timepoint "))
@@ -1260,6 +1441,10 @@ server <- function(input,output, session) {
     output$test12121 <- renderText({
       paste(h4(strong((paste("1")))))
     })
+    
+    #################################################
+    ## Start - Create 3D Plot of entire dataset
+    #################################################
     output$Plotly_Fxna <- renderPlotly({
       plot_ly(x = ~seq(from=0, to=1, length.out = ncol(X)), 
               y = ~seq(from=1, to=nrow(X)), 
@@ -1271,6 +1456,10 @@ server <- function(input,output, session) {
         zaxis = list(title="Value")
       )) %>% colorbar(title = "Value", len=1)
     })
+    #################################################
+    ## End - Create 3D Plot of entire dataset
+    #################################################
+    
     show("Fxn_Row")
     plot.main_2 <- "Estimated Coherence"
     plot.main_3D <- "3D Representation of Autospectrogram"
@@ -1281,8 +1470,45 @@ server <- function(input,output, session) {
         plot.main_2 = plot.main_2, plot.main_3D = plot.main_3D, plot.main_3D.2 = plot.main_3D.2, 
         plot.log = res$summary, plot.freq = unname(tmp[,1]), plot.pvals = unname(tmp[,3]),
         dat_type = dat_type)
-    
+    #################################################
+    ## End - Show and Update Sliders and Descriptors,
+    ## and store important values for future use
+    #################################################
   });
+  
+  #################################################################
+  ## Start - Update Plot based on selected timepoint of our simulated 
+  ## Functional data 
+  #################################################################
+  
+  observeEvent(input$x_F1, ignoreNULL = FALSE, {
+    curr_row <- as.numeric(input$x_F1)
+    output$test12121 <- renderText({
+      paste(h4(strong(paste(curr_row))))
+    })
+    if(is.na(curr_row)){
+      
+    } else {
+      output$Fxn_Plota <- renderPlotly({
+        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
+          xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+          scale_x_continuous(limits = c(0,1), expand=c(0,0))
+        ggplotly(a)
+      })
+    }
+    
+  })
+  
+  #################################################################
+  ## End - Update Plot based on selected timepoint of our simulated 
+  ## Functional data 
+  #################################################################
+  
+  #################################################
+  ## Start - Display Table containing results on 
+  ## partition testing for Simulated, Functional Data
+  #################################################
+  
   output$summ_out_fxn <- renderPlot({
     freq <- round(plot.listF1()[[10]][,1], 3)
     pval <- round(plot.listF1()[[10]][,2], 5)
@@ -1302,11 +1528,33 @@ server <- function(input,output, session) {
     blank9090 <- textGrob(""); blank0909 <- textGrob("")
     grid.arrange(blank9090, title, res1, blank0909, ncol = 1)
   })
+  
+  #################################################
+  ## End - Display Table containing results on 
+  ## partition testing for Simulated, Functional Data
+  #################################################
+  
+  #################################################
+  ## Start - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Functional data at each frequency
+  #################################################
+  
   output$summ_pval_fxn <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listF1()[[11]]), y = as.numeric(plot.listF1()[[12]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
       geom_vline(xintercept = (plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
+  
+  #################################################
+  ## End - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Functional data at each frequency
+  #################################################
+  
+  #################################################
+  ## Start - Initialize a plot, on the local periodogram
+  ## of the 1-1 Component in our simulated functional data
+  #################################################
+  
   output$Fxn_Plotb <- renderPlot({
     image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,"1-1",]))), 
                axes = TRUE, col = inferno(256), 
@@ -1363,6 +1611,15 @@ server <- function(input,output, session) {
                       draw=TRUE)
   })
   
+  #################################################
+  ## End - Initialize a plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Initialize a 3-D plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
   output$Plotly_Fxnb <- renderPlotly({
     plot_ly(y=~plot.listF1()[[1]], x=~plot.listF1()[[2]], z=~t(Re(plot.listF1()[[3]][,"1-1",])))  %>%layout(title=plot.listF1()[[8]], 
                                                                                                             scene = list( 
@@ -1370,6 +1627,17 @@ server <- function(input,output, session) {
            yaxis = list(title="Timepoint"), 
            zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
   })
+  
+  #################################################
+  ## End - Initialize a 3-D plot, on the local periodogram
+  ## of the 1-1 Component in our simulated multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Update a plot on the local periodogram of the
+  ## component selected via the slider in our simulated functional data
+  #################################################
+  
   observeEvent(input$plot1_FxnCheck, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$plot1_FxnCheck)
     if(is.na(plot.listF1()[[4]])){
@@ -1494,12 +1762,19 @@ server <- function(input,output, session) {
         })
           
       }
-        
-    
     }
-    
   })
-   
+  
+  #################################################
+  ## End - Update a plot on the local periodogram of the
+  ## component selected via the slider in our simulated functional data
+  #################################################
+  
+  #################################################
+  ## Start - Update a 3-D plot on the local periodogram of the
+  ## component selected via the slider in our simulated functional data
+  #################################################
+  
   observeEvent(input$q11_F1, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$q11_F1)
     if(is.na(plot.listF1()[[4]])){
@@ -1537,27 +1812,256 @@ server <- function(input,output, session) {
     }
 
   }) 
-  # observeEvent(input$Fxn_Row, ignoreNULL = TRUE, {
-  #   if(input$Fxn_Row == 'No'){
-  #     hide("Plotly_Fxna.5")
-  #     hide("x11_F1")
-  #     hide("FxnPlot11Desc")
-  #   } else {
-  #     show("Plotly_Fxna.5")
-  #     show("x11_F1")
-  #     updateSelectInput(session, "x11_F1", choices = seq(from=1, to = dim(plot.listF1()[[6]])[1], by=1), selected=1)
-  #     show("FxnPlot11Desc")
-  #     output$Plotly_Fxna.5 <- renderPlot({
-  #       ggplot() + geom_line(aes(x=seq(from=1, to=as.numeric(input$RF1), length.out=length(plot.listF1()[[6]][1,])), y=plot.listF1()[[6]][1,])) + 
-  #         xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) 
-  #     })
-  #     output$FxnPlot11Desc <- renderText({
-  #       paste(h4("Currently viewing timepoint "))
-  #     })
-  #     
-  #   }
-  # })
-  # 
+  
+  #################################################
+  ## End - Update a 3-D plot on the local periodogram of the
+  ## component selected via the slider in our simulated functional data
+  #################################################
+  
+  #######################################################
+  ## Event Reactive Block End point for the Simulated 
+  ## Functional algorithm
+  #######################################################
+  
+  
+  
+  
+  #######################################################
+  ## Event Reactive Block Start point for the Simulated 
+  ## Univariate algorithm
+  #######################################################
+  
+  plot.list <- eventReactive(input$go, ignoreNULL = FALSE, {
+    set.seed(823819)
+    X = eba.simdata(T=as.numeric(input$Time))
+    
+    if (input$Simsetting == "W"){
+      ################################################
+      ## Start - Algorithm Execution if Data is White Noise
+      ################################################
+      ebaout.wn <- eba.search(X=X$wn,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
+      plot.x = ebaout.wn$mtspec$t
+      plot.y = ebaout.wn$mtspec$f
+      plot.z = t(ebaout.wn$mtspec$mtspec)
+      plot.main = "Multitaper Spectrogram for White Noise Setting"
+      plot.h = as.numeric(ebaout.wn$part.final[c(-1,-length(ebaout.wn$part.final))])
+      plot.data = X$wn  
+      plot.log = ebaout.wn$log
+      plot.pvals = ebaout.wn$pvals
+      plot.flat = ebaout.wn$flat
+      ################################################
+      ## End - Algorithm Execution if Data is White Noise
+      ################################################
+      
+    } else if (input$Simsetting == "L") {
+      ################################################
+      ## Start - Algorithm Execution if Data is Linear
+      ################################################
+      ebaout.bL <- eba.search(X=X$bL,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
+      plot.x = ebaout.bL$mtspec$t
+      plot.y = ebaout.bL$mtspec$f
+      plot.z = t(ebaout.bL$mtspec$mtspec)
+      plot.main = "Multitaper Spectrogram for Linear Setting"
+      plot.h = as.numeric(ebaout.bL$part.final[c(-1,-length(ebaout.bL$part.final))])
+      plot.data = X$bL
+      plot.log = ebaout.bL$log
+      plot.pvals = ebaout.bL$pvals
+      plot.flat = ebaout.bL$flat
+      ################################################
+      ## End - Algorithm Execution if Data is Linear
+      ################################################
+      
+    } else if (input$Simsetting == "S") {
+      ################################################
+      ## Start - Algorithm Execution if Data is Sinusoidal
+      ################################################
+      ebaout.bS <- eba.search(X=X$bS,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
+      plot.x = ebaout.bS$mtspec$t
+      plot.y = ebaout.bS$mtspec$f
+      plot.z = t(ebaout.bS$mtspec$mtspec)
+      plot.main = "Multitaper Spectrogram for Sinusoidal Setting"
+      plot.h = as.numeric(ebaout.bS$part.final[c(-1,-length(ebaout.bS$part.final))])
+      plot.data = X$bS
+      plot.log = ebaout.bS$log
+      plot.pvals = ebaout.bS$pvals
+      plot.flat = ebaout.bS$flat
+      ################################################
+      ## End - Algorithm Execution if Data is Sinusoidal
+      ################################################
+    }
+    dat_type <- as.character(input$Simsetting)
+    list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
+         plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
+         plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat,
+         dat_type = dat_type)
+    
+  });
+  
+  ################################################
+  ## Start - Create both a plot of the data, and a
+  ## plot of the Local Periodogram
+  ################################################
+  
+  output$Image_Plot <- renderPlot({
+    par(mar=c(4,4,12,12))
+    vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
+                       just=c( "bottom"), y=0.6, x=0.475)
+    plot.new()
+    image.plot(x=plot.list()[[1]], y=plot.list()[[2]], z=plot.list()[[3]], 
+               axes = TRUE, col = inferno(256), 
+               xlab='Time',ylab='Hz',xaxs="i", 
+               bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5));title(plot.list()[[4]], line=0.75); 
+    abline(h=plot.list()[[5]], col = "skyblue", lwd=3)
+    if(plot.list()[[10]] == "W"){
+      act <- c("(0,0.5)")
+    } else {
+      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
+      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
+    }
+    vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
+                      just=c("left", "top"), y=0.5, x=0.6)
+    len <- length(plot.list()[[5]])
+    vals <- plot.list()[[5]]
+    if(len == 0){
+      str <- "(0, 0.5),"
+    } else if (len == 1) {
+      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+    } else {
+      str <- paste("(0", sep="")
+      for(i in 1:len){
+        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      }
+      str <- paste(str, ",", "0.5),", sep="")
+    }
+    spp <- strsplit(str, "),")[[1]]
+    for(a in 1:length(spp)){
+      spp[a] <- paste(spp[a], ")", sep="")
+    }
+    max_len <- max(length(act), length(spp))
+    if(length(act) == length(spp)){
+      
+    } else if(length(act) > length(spp)){
+      sp_l <- length(spp) + 1
+      for(i in sp_l: length(act)){
+        spp[i] <- ""
+      }
+    } else {
+      ac_l <- length(act) + 1
+      for(i in ac_l: length(spp)){
+        act[i] <- ""
+      }
+    }
+    pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
+    colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
+    grid.table(pp, vp=vp.br, rows=NULL)
+    
+    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
+                     just=c("left", "top"), y=0.65, x=0.6)
+    grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+    jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
+                      draw=TRUE)
+    
+    print( ggplot() + geom_line(aes(x=seq(0,1,length.out = length(plot.list()[[6]])), y= plot.list()[[6]])) + xlab("Time") +
+             ylab("") + ggtitle("Simulated Time Series Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+             scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top)
+  }); 
+  
+  ################################################
+  ## End - Create both a plot of the data, and a
+  ## plot of the Local Periodogram
+  ################################################
+  
+  #################################################
+  ## Start - Display Table containing results on 
+  ## partition testing for Simulated, Univariate Data
+  #################################################
+  
+  output$summ_out_uni <- renderPlot({
+    pvals <- round(plot.list()[[7]][,4], 5)
+    pval.th <- round(plot.list()[[7]][,5], 5)
+    Sig <- character(length(pvals))
+    for(i in 1:length(Sig)){
+      if(pvals[i] < pval.th[i]){
+        Sig[i] <- "TRUE"
+      } else {
+        Sig[i] <- "FALSE"
+      }
+    }
+    pp <- data.frame("Frequency" = round(plot.list()[[7]][,2], 3), "P-Value" = round(plot.list()[[7]][,4], 5), 
+                     "P-Value\nThreshold" = round(plot.list()[[7]][,5], 5), "Significance" = as.character(Sig))
+    colnames(pp) <- c("Frequency", "P-Value", "P-Value \n Threshold", "Significant")
+    table <- tableGrob(pp, rows=NULL)
+    title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
+    blank1 <- textGrob("")
+    
+    len <- length(plot.list()[[5]])
+    vals <- plot.list()[[5]]
+    if(len == 0){
+      str <- "(0, 0.5),"
+    } else if (len == 1) {
+      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
+    } else {
+      str <- paste("(0", sep="")
+      for(i in 1:len){
+        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
+      }
+      str <- paste(str, ",", "0.5),", sep="")
+    }
+    spp <- strsplit(str, "),")[[1]]
+    for(a in 1:length(spp)){
+      spp[a] <- paste(spp[a], ")", sep="")
+    }
+    pvals <- plot.list()[[9]][,2]
+    Res <- character(length(pvals))
+    Sig2 <- numeric(length(pvals))
+    for(i in 1:length(Res)){
+      if(pvals[i] < 0.05){
+        Res[i] = "Segment has \n nonflat spectrum"
+        Sig2[i] = "TRUE"
+      } else {
+        Res[i] = "Segment has \n flat spectrum"
+        Sig2[i] = "FALSE"
+      }
+    }
+    blank1 <- textGrob(""); blank2 <- textGrob("")
+    new_tab <- data.frame("Frequency Bands" = spp, "P-Values" = round(as.numeric(pvals), 5),"Significant" = Sig2 ,"Results" = Res)
+    colnames(new_tab) <- c("Frequency \n Bands", "P-Value", "Significant", "Results")
+    test1 <- tableGrob(new_tab, rows = NULL); 
+    title2 <- textGrob(expression(bold("Summary of Testing for Flat \n Spectrum in Each Segment")))
+    grid.arrange(title, table, title2, test1,blank2, heights = c(0.75,0.75,0.85,0.75, 1) ,nrow = 5)
+  })
+  
+  #################################################
+  ## End - Display Table containing results on 
+  ## partition testing for Simulated, Univariate Data
+  #################################################
+  
+  #################################################
+  ## Start - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Univariate data at each frequency
+  #################################################
+  
+  output$summ_pval_uni <- renderPlot({
+    ggplot() + geom_point(aes(x = as.numeric(plot.list()[[8]][,1]), y = as.numeric(plot.list()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
+      xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+      geom_vline(xintercept = plot.list()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
+  })
+  
+  #################################################
+  ## End - Create Scatterplot of p-values for Partition
+  ## testing for Simulated, Univariate data at each frequency
+  #################################################
+  
+  #######################################################
+  ## Event Reactive Block End point for the Simulated 
+  ## Univariate algorithm
+  #######################################################
+  
+  
+  #######################################################
+  ## Start - Read in and store the chosen inputted data
+  #######################################################
+  
   plot.listaa <- eventReactive(input$file_csv, ignoreNULL = FALSE,  {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1591,22 +2095,55 @@ server <- function(input,output, session) {
       updateSliderInput(session, "x_Mv_AA", min = 1, max=dim(dataf)[2], value=1, step=1)
       list(dataf=dataf, main = main)}}
   )
+  #######################################################
+  ## End - Read in and store the chosen inputted data
+  #######################################################
+  
+  
   observeEvent(input$file_csv, {
     if(is.na(plot.listbb()[[2]])){
 
     } else {
+      
+      #######################################################
+      ## Start - Initialize Plot for First timepoint in 
+      ## Observed, Functional Data
+      #######################################################
+      
       output$Test_Fxna_Plot1<- renderPlotly({
         a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[2]), y=as.numeric(plot.listbb()[[1]][1,]))) +
           xlab("Functional Domain") + ylab("") + ggtitle("Observed Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) +
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
         ggplotly(a)
       })
+      #######################################################
+      ## End - Initialize Plot for First timepoint in 
+      ## Observed, Functional Data
+      #######################################################
+      
+      #######################################################
+      ## Start - Initialize Plot for First Component in 
+      ## Observed, Multivariate Data
+      #######################################################
+      
       output$Test_Mva_Plot1 <- renderPlotly({
         a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,1]))) +
           xlab("Time") + ylab("") + ggtitle("Observed Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) +
           scale_x_continuous(limits=c(0,1), expand=c(0,0))
         ggplotly(a)
       })
+      
+      #######################################################
+      ## End - Initialize Plot for First Component in 
+      ## Observed, Multivariate Data
+      #######################################################
+      
+      #######################################################
+      ## Start - Hide and Reset Plots and Descriptors, to have a "blank
+      ## slate" whenever a new file is uploaded, before any code is run
+      #######################################################
+      
+      
       output$test12121_AA <- renderText({
         paste(h4(strong("1")))
       })
@@ -1654,10 +2191,18 @@ server <- function(input,output, session) {
           
         })
       
-      
+      #######################################################
+      ## End - Hide and Reset Plots and Descriptors, to have a "blank
+      ## slate" whenever a new file is uploaded, before any code is run
+      #######################################################
 
     }
   })
+  
+  #######################################################
+  ## Start - Show the necessary descriptors and sliders
+  ## for the Observed, Functional algorithm
+  #######################################################
   
   observeEvent(input$go_Fxna, {
     show("Blank2_file")
@@ -1668,18 +2213,22 @@ server <- function(input,output, session) {
     show("Blank10100_file")
     show("q11_F1_file")
   })
-  observeEvent(input$go_Mva, {
-    #show("MvbPlotDesc_file")
-    #show("Mv2_file")
-    #show("MvPlot22Desc_file")
-    #show("BlankMv_file")
-    #show("q11_Mv_file")
-    #show("plot1_MvCheck_file")
-  })
+  
+  #######################################################
+  ## End - Show the necessary descriptors and sliders
+  ## for the Observed, Functional algorithm
+  #######################################################
+  
+  
+  #######################################################
+  ## Start - Conditionally shows or hides descriptors and 
+  ## sliders on the file upload side, depending on if the 
+  ## inputted data is univariate or not
+  #######################################################
+  
   observeEvent(input$file_csv, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
-    #dataf <- read.csv(file$datapath, header = input$header)[,-1]
     dataf <- read.csv(file$datapath, header = input$header)
     dims <- dim(dataf)[2]
     if(dims == 1){
@@ -1764,6 +2313,20 @@ server <- function(input,output, session) {
       hide("summ_pval_uni_file")
     }
   })
+  
+  #######################################################
+  ## Hide - Conditionally shows or hides descriptors and 
+  ## sliders on the file upload side, depending on if the 
+  ## inputted data is univariate or not
+  #######################################################
+  
+  #######################################################
+  ## Start - Conditionally shows or hides descriptors and 
+  ## sliders on the file upload side, depending on if the 
+  ## inputted data is functional or multivariate- as this 
+  ## wouldn't trigger if the data is univariate
+  #######################################################
+  
   observeEvent(input$Data_Checker, {
     if(input$Data_Checker == "Functional"){
       show("Plot3D_File")
@@ -1786,17 +2349,6 @@ server <- function(input,output, session) {
                  "K < floor(N/4 - 1)"))
       })
       show("Fxn_CC")
-      # if(dim(plot.listbb()[[1]])[2] == 5){
-      #   output$Fxn_CC <- renderText({
-      #     paste(h6("***Valid choices are 5 as we need to satisfy 1", HTML("&le;"), 
-      #              "Rsel", HTML("&le;")," R"))
-      #   })  
-      # } else {
-      #   output$Fxn_CC <- renderText({
-      #     paste(h6("***Valid choices are 5, and 10 as we need to satisfy 1", HTML("&le;"), 
-      #              "Rsel", HTML("&le;")," R"))
-      #   })
-      # }
       hide("Ts_Mv_Dim")
       hide("nrepMv_file")
       hide("WselMv_file")
@@ -1821,20 +2373,36 @@ server <- function(input,output, session) {
       show("Plot3D_FileM")
     }
   })
+  
+  #######################################################
+  ## End - Conditionally shows or hides descriptors and 
+  ## sliders on the file upload side, depending on if the 
+  ## inputted data is functional or multivariate- as this 
+  ## wouldn't trigger if the data is univariate
+  #######################################################
+  
   observeEvent(input$file_csv, {
     
    output$T_len <- renderText({
      paste(strong("Total Length of Time Series (T): ", length(plot.listaa()[[1]])))
-   })
+   }) # Displays length of uploaded, univariate data
+   
    output$Blank <- renderText({
      paste("")
    })
+   
+   #######################################################
+   ## Start - Create a plot of Uploaded, Univariate data
+   #######################################################
     output$Image_Plota <- renderPlot({
       print( ggplot() + geom_line(aes(x=seq(0,1,length.out = length(plot.listaa()[[1]])), y= plot.listaa()[[1]])) + xlab("Time") +
                ylab("") + ggtitle("Observed Time Series Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
                scale_x_continuous(limits=c(0,1), expand=c(0,0)))
-      
     })
+   #######################################################
+   ## End - Create a plot of Uploaded, Univariate data
+   #######################################################
+   
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
     le <- length(file[[1]])
@@ -1846,6 +2414,10 @@ server <- function(input,output, session) {
       dataf <- read.csv(file$datapath, header = input$header)
       dataf <- dataf[[1]]
       
+      #######################################################
+      ## Start - Get Initial Values for parameters in Univariate 
+      ## algorithm, based on uploaded data
+      #######################################################
     updateNumericInput(session, "Num2", value=floor(sqrt(length(dataf))))
     updateNumericInput(session, "Tapers2", value=floor(0.15 * sqrt(length(dataf))))
     output$res9 <- renderText({
@@ -1856,7 +2428,17 @@ server <- function(input,output, session) {
     output$res10 <- renderText({
           paste("**Valid choices range from 1 to ", floor(sqrt(length(dataf))*0.24))
     }) }
+    #######################################################
+    ## End - Get Initial Values for parameters in Univariate 
+    ## algorithm, based on uploaded data
+    #######################################################
   })
+  
+  #######################################################
+  ## Start - Get Values for K based on N, for Uploaded 
+  ## Univariate data
+  #######################################################
+  
   observeEvent(input$Num2, ignoreNULL = FALSE, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1894,6 +2476,17 @@ server <- function(input,output, session) {
     }
     
   })
+  
+  #######################################################
+  ## End - Get Values for K based on N, for Uploaded 
+  ## Univariate data
+  #######################################################
+  
+  #######################################################
+  ## Start - Set Reminder text on File Upload, Functional
+  ## Side, as to valid choices for K
+  #######################################################
+  
   observeEvent(input$Num_Fxna, {
     curr_num <- as.numeric(input$Num_Fxna)
     output$Fxn_BB <- renderText({
@@ -1901,6 +2494,17 @@ server <- function(input,output, session) {
                "K < floor(N/4 - 1)"))
     })
   })
+  
+  #######################################################
+  ## End - Set Reminder text on File Upload, Functional
+  ## Side, as to valid choices for K
+  #######################################################
+  
+  #######################################################
+  ## Start - Update plot of Uploaded Functional Data, 
+  ## to display timepoint chosen via slider
+  #######################################################
+  
   observeEvent(input$x_F1_AA, ignoreNULL = FALSE, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1924,6 +2528,17 @@ server <- function(input,output, session) {
     }
     
   })
+  
+  #######################################################
+  ## End - Update plot of Uploaded Functional Data, 
+  ## to display timepoint chosen via slider
+  #######################################################
+  
+  #######################################################
+  ## Start - Update plot of Uploaded Multivariate Data, 
+  ## to display component chosen via slider
+  #######################################################
+  
   observeEvent(input$x_Mv_AA, ignoreNULL = FALSE, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1948,9 +2563,20 @@ server <- function(input,output, session) {
     
   })
   
+  #######################################################
+  ## End - Update plot of Uploaded Multivariate Data, 
+  ## to display component chosen via slider
+  #######################################################
+  
   output$res10 <- renderText({
     
   })
+  
+  #######################################################
+  ## Event Reactive Block Start point for the Observed 
+  ## Univariate algorithm
+  #######################################################
+  
   plot.list2 <- eventReactive(input$go2, ignoreNULL = FALSE, {
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
@@ -1972,6 +2598,16 @@ server <- function(input,output, session) {
          plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
          plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat)})
   
+  #######################################################
+  ## Event Reactive Block End point for the Observed 
+  ## Univariate algorithm
+  #######################################################
+  
+  #######################################################
+  ## Start- Set the text of various descriptors to be 
+  ## used on the File Upload side of the app
+  #######################################################
+  
   show("FxnPlotaDesc_AA")
   output$FxnPlotaDesc_AA <- renderText({
     paste(h4("Currently viewing timepoint "))
@@ -1980,15 +2616,36 @@ server <- function(input,output, session) {
   output$MvPlotaDesc_AA <- renderText({
     paste(h4("Currently viewing component "))
   })
+  
+  #######################################################
+  ## End- Set the text of various descriptors to be 
+  ## used on the File Upload side of the app
+  #######################################################
+  
+  #######################################################
+  ## Event Reactive Block Start point for the Observed 
+  ## Multivariate algorithm
+  #######################################################
+  
   plot.listMv2 <- eventReactive(input$go_Mva, ignoreNULL = FALSE, {
     source("mEBA_Rfunctions.R")
     Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
+    #################################################
+    ## Start - Read in the Data
+    #################################################
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
     req(file)
     validate(need(ext == "csv", "Please upload a csv file"))
     dataf <- read.csv(file$datapath, header = input$header)
     dataf <- as.matrix(dataf)
+    #################################################
+    ## End - Read in the Data
+    #################################################
+
+    #################################################
+    ## Start - Initialize values based on data
+    #################################################
     colnames(dataf) <- NULL
     nrow = nrow(dataf); ncol = ncol(dataf)
     t <- nrow; R <- ncol
@@ -1997,10 +2654,24 @@ server <- function(input,output, session) {
     seed=234; #seed for reproducibility
     N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
     freq <- seq(0,floor(N/2),by=1)/N
+    #################################################
+    ## End - Initialize values based on data
+    #################################################
+
+    #################################################
+    ## Start - Run the algorithm
+    #################################################
     pse <- fhat(dataf,N,stdz=FALSE);
     gpse <- ghat(pse);
     b.out=msboot(nrep=nrep, dataf, Wsel=Wsel, stdz=FALSE, ncore=1)
     method <- b.out
+    #################################################
+    ## End - Run the algorithm
+    #################################################
+
+    #################################################
+    ## Start - Save and store values from algorithm
+    #################################################
     vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
     indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
     thresh <- numeric(0)
@@ -2034,9 +2705,17 @@ server <- function(input,output, session) {
     conf <- numeric(length(pse))
     dim(conf) <- dim(pse)
     dimnames(conf) <- dimnames(pse)
+    #################################################
+    ## End - Save and store values from algorithm
+    #################################################
+
+    #################################################
+    ## Start - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
     for(k in 1:dim(pse)[3]){
       for(j in 1:dim(pse)[2]){
-        first_col <- ((j - 1) %% (as.numeric(R))) + 1 
+        first_col <- ((j - 1) %% (as.numeric(R))) + 1
         second_col <- ((j - 1) %/% (as.numeric(R))) + 1
         cmpt_1 <- paste(first_col, "-", first_col, sep="")
         cmpt_2 <- paste(second_col, "-", second_col, sep="")
@@ -2049,8 +2728,16 @@ server <- function(input,output, session) {
         }
       }
     }
+    #################################################
+    ## End - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
     comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
-    
+
+
+    #################################################
+    ## Start - Update Descriptors and Sliders
+    #################################################
     show("Mv12121_AA")
     show("x_Mv_AA")
     show("Mv2_file")
@@ -2085,13 +2772,27 @@ server <- function(input,output, session) {
       paste(h4(strong((paste("1-1")))))
     })
     check = "Test"
+    #################################################
+    ## End - Update Descriptors and Sliders
+    #################################################
     list(X = dataf, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
-         comp_names = comp_names, thresh_bounds = thresh_bounds, 
+         comp_names = comp_names, thresh_bounds = thresh_bounds,
          tested_freq = uni_fre, indexes=indexes, check = check)
   })
+  
+  #######################################################
+  ## Event Reactive Block End point for the Observed 
+  ## Multivariate algorithm
+  #######################################################
+  
   observeEvent(plot.listMv2()[[11]], {
     
   })
+  
+  #################################################
+  ## Start - Initalize the Periodogram for the 1-1
+  ## Component in the Observed, Multivariate data
+  #################################################
   output$Mv_Plotb_file <- renderPlot({
     image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,1,])), 
                axes = TRUE, col = inferno(256), 
@@ -2131,6 +2832,15 @@ server <- function(input,output, session) {
     )), vp=vp.r, 
     draw=TRUE)
   })
+  #################################################
+  ## End - Initalize the Periodogram for the 1-1
+  ## Component in the Observed, Multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Update the Periodogram for the 
+  ## Observed, Multivariate data, based on selected component
+  #################################################
   observeEvent(input$plot1_MvCheck_file, {
     curr_num <- as.numeric(input$plot1_MvCheck_file)
     curr_comp <- paste(curr_num, "-", curr_num, sep="")
@@ -2177,6 +2887,15 @@ server <- function(input,output, session) {
       draw=TRUE)
     })
   })
+  #################################################
+  ## End - Update the Periodogram for the 
+  ## Observed, Multivariate data, based on selected component
+  #################################################
+  
+  #################################################
+  ## Start - Initalize the 3-D Plot for the 1-1 component
+  ## of the periodogram for observed, multivariate data
+  #################################################
   output$Plotly_Mvb_file <- renderPlotly({
     plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
             x=~plot.listMv2()[[3]][-1],
@@ -2184,6 +2903,15 @@ server <- function(input,output, session) {
                                                                                                                    yaxis = list(title="Timepoint", range=c(0,1)), 
                                                                                                                    zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
   })
+  #################################################
+  ## End - Initalize the 3-D Plot for the 1-1 component
+  ## of the periodogram for observed, multivariate data
+  #################################################
+  
+  #################################################
+  ## Start - Update the Periodogram for the 
+  ## Observed, Multivariate data, based on selected component
+  #################################################
   observeEvent(plot.listMv2()[[11]], {
     output$Mv_Plotb_file <- renderPlot({
       image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,1,])), 
@@ -2224,6 +2952,15 @@ server <- function(input,output, session) {
       )), vp=vp.r, 
       draw=TRUE)
     })
+    #################################################
+    ## End - Update the Periodogram for the 
+    ## Observed, Multivariate data, based on selected component
+    #################################################
+    
+    #################################################
+    ## Start - Initalize the 3-D Plot for the 1-1 component
+    ## of the periodogram for observed, multivariate data
+    #################################################
     output$Plotly_Mvb_file <- renderPlotly({
       plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
               x=~plot.listMv2()[[3]][-1],
@@ -2231,6 +2968,15 @@ server <- function(input,output, session) {
                                                                                                                       yaxis = list(title="Timepoint", range=c(0,1)), 
                                                                                                                       zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
     })
+    #################################################
+    ## End - Initialize the 3-D Plot for the 1-1 component
+    ## of the periodogram for observed, multivariate data
+    #################################################
+    
+    #################################################
+    ## Start - Display Table containing results on 
+    ## partition testing for Observed, Multivariate Data
+    #################################################
     output$summ_out_Mv_file <- renderPlot({
       freq <- round(plot.listMv2()[[9]], 3)
       mod_pval <- plot.listMv2()[[6]]
@@ -2253,12 +2999,30 @@ server <- function(input,output, session) {
       blank9090 <- textGrob(""); blank0909 <- textGrob("")
       grid.arrange(title, res1, blank0909, ncol = 1)
     })
+    #################################################
+    ## End - Display Table containing results on 
+    ## partition testing for Observed, Multivariate Data
+    #################################################
+    
+    #################################################
+    ## Start - Create Scatterplot of p-values for Partition
+    ## testing for Observed, Multivariate data at each frequency
+    #################################################
     output$summ_pval_Mv_file <- renderPlot({
       ggplot() + geom_point(aes(x = as.numeric(plot.listMv2()[[9]]), y = as.numeric(plot.listMv2()[[5]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
         xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
         geom_vline(xintercept = plot.listMv2()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
     })
+    #################################################
+    ## End - Create Scatterplot of p-values for Partition
+    ## testing for Observed, Multivariate data at each frequency
+    #################################################
   })
+  
+  #################################################
+  ## Start - Update the 3-D Plot for the selected component
+  ## of the periodogram for observed, multivariate data
+  #################################################
   observeEvent(input$q11_Mv_file, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$q11_Mv_file)
     curr_comp <- paste(curr_num, "-", curr_num, sep="")
@@ -2274,16 +3038,34 @@ server <- function(input,output, session) {
     })
     
   })
+  #################################################
+  ## End - Update the 3-D Plot for the selected component
+  ## of the periodogram for observed, multivariate data
+  #################################################
   
+  #######################################################
+  ## Event Reactive Block Start point for the Observed 
+  ## Functional algorithm
+  #######################################################
   plot.listFxn2 <- eventReactive(input$go_Fxna,  {
     source("fEBA_Rfns.R")
     Rcpp::sourceCpp("fEBA_072321.cpp")
+    #################################################
+    ## Start - Read in the Data
+    #################################################
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
     req(file)
     validate(need(ext == "csv", "Please upload a csv file"))
     dataf <- read.csv(file$datapath, header = input$header)
     dataf <- as.matrix(dataf)
+    #################################################
+    ## End - Read in the Data
+    #################################################
+    
+    #################################################
+    ## Start - Initialize values based on data
+    #################################################
     colnames(dataf) <- NULL
     nrow = nrow(dataf); ncol = ncol(dataf)
     nb=15; #number of basis functions used to generate white noise
@@ -2296,6 +3078,13 @@ server <- function(input,output, session) {
     K=as.numeric(input$Tapers_Fxna); #number of tapers for multitaper spectral estimator
     std=as.logical(input$TF_Fxna); #standardize variance for points in functional domain (TRUE) or not (FALSE)
     freq=seq(from=0,by=1/N,length.out=floor(N/2)+1); #Fourier frequencies
+    #################################################
+    ## End - Initialize values based on data
+    #################################################
+    
+    #################################################
+    ## Start - Run the algorithm
+    #################################################
     Rsel=as.numeric(input$Rsel_Fxna); #number of points in functional domain used for test statistics
     pse=fhat(dataf,N,K,Rsel,std);
     cmpnt="1-1"; #select component to view
@@ -2304,7 +3093,10 @@ server <- function(input,output, session) {
     plot.cmp <- apply(expand.grid(1:Rsel,1:Rsel),1,paste,collapse = "-")
     plot.main <- "Multitaper Autospectrum"; plot.data = dataf
     
-    
+    #################################################
+    ## Start - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
     conf <- numeric(length(pse))
     dim(conf) <- dim(pse)
     dimnames(conf) <- dimnames(pse)
@@ -2323,6 +3115,10 @@ server <- function(input,output, session) {
         }
       }
     }
+    #################################################
+    ## End - Find Signal Coherence Based on Power
+    ## Spectrum Estimate
+    #################################################
     
     set.seed(47)
     ndraw=100000; #number of draws from Gaussian process for approximating p-values
@@ -2336,13 +3132,16 @@ server <- function(input,output, session) {
               unlist(lapply(res$log, function(x) x$Qint)),
               unlist(lapply(res$log, function(x) x$Qpv[,'Qint'])));
     tmp=tmp[!duplicated(tmp[,1]),];
-    
-    
+    #################################################
+    ## End - Run the algorithm
+    #################################################
     plot.z <- conf
     
     plot.data = dataf
     
-    
+    #################################################
+    ## Start - Update Descriptors and Sliders
+    #################################################
     output$FxnbPlotDesc_file <- renderText({
       paste(h4("Currently viewing component "))
     })
@@ -2375,6 +3174,11 @@ server <- function(input,output, session) {
     output$test12121_AA <- renderText({
       paste(h4(strong((paste("1")))))
     })
+    
+    #################################################
+    ## Start - Initialize a 3-D Plot of the entire 
+    ## Observed, Functional Data
+    #################################################
     output$Plotly_Fxna_file <- renderPlotly({
       plot_ly(x = ~seq(from=0, to = 1, length.out=ncol(dataf)),
               y = ~seq(from=1, to=nrow(dataf)), 
@@ -2386,19 +3190,33 @@ server <- function(input,output, session) {
            zaxis = list(title="Value")
          )) %>% colorbar(title = "Value", len=1)
      })
-    # show("Fxn_Row")
+    #################################################
+    ## End - Initialize a 3-D Plot of the entire 
+    ## Observed, Functional Data
+    #################################################
+    
     plot.main_2 <- "Estimated Coherence"
-    #list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
-    #     plot.main = plot.main, plot.cmp = plot.cmp, plot.data = plot.data, plot.main_2 = plot.main_2)
     plot.main_3D <- "3D Representation of Autospectrogram"
     plot.main_3D.2 <- "3D Representation of Coherence"
-    
+    #################################################
+    ## End - Update Descriptors and Sliders
+    #################################################
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
          plot.main = plot.main, plot.cmp = plot.cmp, plot.data = plot.data, 
          nrow = nrow, ncol = ncol, plot.main_2 = plot.main_2, 
          plot.main_3D = plot.main_3D, plot.main_3D.2 = plot.main_3D.2, 
          plot.log = res$summary, plot.freq = unname(tmp[,1]), plot.pvals = unname(tmp[,3]))})
   
+  #######################################################
+  ## Event Reactive Block End point for the Observed 
+  ## Functional algorithm
+  #######################################################
+  
+  
+  #################################################
+  ## Start - Initialize the Periodogram for the 1-1
+  ## Component of the Observed, Functional data
+  #################################################
   output$Fxn_Plotb_file <- renderPlot({
     image.plot(x=plot.listFxn2()[[1]],y=plot.listFxn2()[[2]],z=suppressWarnings(t(Re(plot.listFxn2()[[3]][,"1-1",]))),
                axes = TRUE, col = inferno(256),
@@ -2434,6 +3252,15 @@ server <- function(input,output, session) {
     jj <- grid.legend(c("Predicted Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue")), vp=vp.r,
                       draw=TRUE)
   })
+  #################################################
+  ## End - Initialize the Periodogram for the 1-1
+  ## Component of the Observed, Functional data
+  #################################################
+  
+  #################################################
+  ## Start - Initialize the 3-D Periodogram for the 1-1
+  ## Component of the Observed, Functional data
+  #################################################
   output$Plotly_Fxnb_file <- renderPlotly({
     plot_ly(y=~plot.listFxn2()[[1]], x=~plot.listFxn2()[[2]], z=~t(Re(plot.listFxn2()[[3]][,"1-1",])))  %>%layout(title=plot.listFxn2()[[10]],
                                                                                                                       scene = list(
@@ -2441,6 +3268,15 @@ server <- function(input,output, session) {
                                                                                                                         yaxis = list(title="Timepoint"),
                                                                                                                         zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
   })
+  #################################################
+  ## End - Initialize the Periodogram for the 1-1
+  ## Component of the Observed, Functional data
+  #################################################
+  
+  #################################################
+  ## Start - Display Table containing results on
+  ## partition testing for Observed, Functional data
+  #################################################
   output$summ_out_fxn_file <- renderPlot({
     freq <- round(plot.listFxn2()[[12]][,1], 3)
     pval <- round(plot.listFxn2()[[12]][,2], 5)
@@ -2460,13 +3296,31 @@ server <- function(input,output, session) {
     blank9090 <- textGrob(""); blank0909 <- textGrob("")
     grid.arrange(blank9090, title, res1, blank0909, ncol = 1)
   })
+  #################################################
+  ## End - Display Table containing results on
+  ## partition testing for Observed, Functional data
+  #################################################
   
+  #################################################
+  ## Start - Create Scatterplot of p-values for Partition
+  ## testiing for observed, functional data at each frequency
+  #################################################
   output$summ_pval_fxn_file <- renderPlot({
     ggplot() + geom_point(aes(x = as.numeric(plot.listFxn2()[[13]]), y = as.numeric(plot.listFxn2()[[14]]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
       geom_vline(xintercept = (plot.listFxn2()[[12]][which(plot.listFxn2()[[12]][,4] == 1), 1]), linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
+  #################################################
+  ## End - Create Scatterplot of p-values for Partition
+  ## testiing for observed, functional data at each frequency
+  #################################################
+  
   observeEvent(plot.listFxn2()[[6]],{ 
+    
+    #################################################
+    ## Start - Initialize the Periodogram for the 1-1
+    ## Component of the Observed, Functional data
+    #################################################
     output$Fxn_Plotb_file <- renderPlot({
       image.plot(x=plot.listFxn2()[[1]],y=plot.listFxn2()[[2]],z=suppressWarnings(t(Re(plot.listFxn2()[[3]][,"1-1",]))),
                  axes = TRUE, col = inferno(256),
@@ -2502,6 +3356,15 @@ server <- function(input,output, session) {
       jj <- grid.legend(c("Predicted Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue")), vp=vp.r,
                         draw=TRUE)
     })
+    #################################################
+    ## End - Initialize the Periodogram for the 1-1
+    ## Component of the Observed, Functional data
+    #################################################
+    
+    #################################################
+    ## Start - Initialize the 3-D Periodogram for the 1-1
+    ## Component of the Observed, Functional data
+    #################################################
     output$Plotly_Fxnb_file <- renderPlotly({
       plot_ly(y=~plot.listFxn2()[[1]], x=~plot.listFxn2()[[2]], z=~t(Re(plot.listFxn2()[[3]][,"1-1",])))  %>%layout(title=plot.listFxn2()[[10]],
                                                                                                                     scene = list(
@@ -2509,7 +3372,17 @@ server <- function(input,output, session) {
                                                                                                                       yaxis = list(title="Timepoint"),
                                                                                                                       zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
     })
+    #################################################
+    ## End - Initialize the 3-D Periodogram for the 1-1
+    ## Component of the Observed, Functional data
+    #################################################
+    
     })
+  
+  #################################################
+  ## Start - Update the Periodogram for the chosen
+  ## Component of the Observed, Functional data
+  #################################################
   observeEvent(input$plot1_FxnCheck_file, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$plot1_FxnCheck_file)
     if(is.na(plot.listFxn2()[[4]])){
@@ -2595,6 +3468,15 @@ server <- function(input,output, session) {
       }
     }
   })
+  #################################################
+  ## End - Update the Periodogram for the chosen
+  ## Component of the Observed, Functional data
+  #################################################
+  
+  #################################################
+  ## Start - Update the 3-D Periodogram for the chosen
+  ## Component of the Observed, Functional data
+  #################################################
   observeEvent(input$q11_F1_file, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$q11_F1_file)
     if(is.na(plot.listFxn2()[[4]])){
@@ -2631,7 +3513,16 @@ server <- function(input,output, session) {
       
     }
     
-  }) 
+  })
+  #################################################
+  ## End - Update the 3-D Periodogram for the chosen
+  ## Component of the Observed, Functional data
+  #################################################
+  
+  #################################################
+  ## Start - Initialize the Periodogram for the Observed
+  ## Univariate data
+  #################################################
   output$Image_Plot2 <- renderPlot({
     par(mar=c(4,4,12,12))
     vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
@@ -2672,222 +3563,15 @@ server <- function(input,output, session) {
     jj <- grid.legend(c("Predicted Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue")), vp=vp.r, 
                       draw=TRUE)
   })
+  #################################################
+  ## End - Initialize the Periodogram for the Observed
+  ## Univariate data
+  #################################################
   
-  observeEvent(input$x_F1, ignoreNULL = FALSE, {
-    curr_row <- as.numeric(input$x_F1)
-    output$test12121 <- renderText({
-      paste(h4(strong(paste(curr_row))))
-    })
-    if(is.na(curr_row)){
-      
-    } else {
-      output$Fxn_Plota <- renderPlotly({
-        a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=length(plot.listF1()[[6]][curr_row,])), y=plot.listF1()[[6]][curr_row,])) + 
-          xlab("Functional Domain") + ylab("") + ggtitle("Simulated Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-          scale_x_continuous(limits = c(0,1), expand=c(0,0))
-        ggplotly(a)
-      })
-    }
-    
-  })
-  #####
-  observeEvent(input$q_F1, ignoreNULL = TRUE, {
-    curr_comp <- as.character(input$q_F1)
-    if(is.na(curr_comp)){
-      
-    } else {
-      if(is.na(plot.listF1()[[4]])){
-        
-      } else {
-        if(as.numeric(strsplit(curr_comp, "-")[[1]])[1] == as.numeric(strsplit(curr_comp, "-")[[1]][2])){
-          title = "Multitaper Autospectrum"
-        } else {
-          title = "Estimated Coherence"
-        }
-      output$Fxn_Plotb <- renderPlot({
-        image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,curr_comp,]))), 
-                   axes = TRUE, col = inferno(256), 
-                   main = title ,xlab='Time',ylab='Hz',xaxs="i"); 
-      
-      })
-      }
-    }
-    
-  })
-  
-  
-  plot.list <- eventReactive(input$go, ignoreNULL = FALSE, {
-    set.seed(823819)
-    X = eba.simdata(T=as.numeric(input$Time))
-    
-    if (input$Simsetting == "W"){
-      ebaout.wn <- eba.search(X=X$wn,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
-      plot.x = ebaout.wn$mtspec$t
-      plot.y = ebaout.wn$mtspec$f
-      plot.z = t(ebaout.wn$mtspec$mtspec)
-      plot.main = "Multitaper Spectrogram for White Noise Setting"
-      plot.h = as.numeric(ebaout.wn$part.final[c(-1,-length(ebaout.wn$part.final))])
-      plot.data = X$wn  
-      plot.log = ebaout.wn$log
-      plot.pvals = ebaout.wn$pvals
-      plot.flat = ebaout.wn$flat
-      
-      
-    } else if (input$Simsetting == "L") {
-      ebaout.bL <- eba.search(X=X$bL,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
-      plot.x = ebaout.bL$mtspec$t
-      plot.y = ebaout.bL$mtspec$f
-      plot.z = t(ebaout.bL$mtspec$mtspec)
-      plot.main = "Multitaper Spectrogram for Linear Setting"
-      plot.h = as.numeric(ebaout.bL$part.final[c(-1,-length(ebaout.bL$part.final))])
-      plot.data = X$bL
-      plot.log = ebaout.bL$log
-      plot.pvals = ebaout.bL$pvals
-      plot.flat = ebaout.bL$flat
-      
-    } else if (input$Simsetting == "S") {
-      ebaout.bS <- eba.search(X=X$bS,N= as.numeric(input$Num),K=as.numeric(input$Tapers),std=input$TF,alpha=as.numeric(input$Signi))
-      plot.x = ebaout.bS$mtspec$t
-      plot.y = ebaout.bS$mtspec$f
-      plot.z = t(ebaout.bS$mtspec$mtspec)
-      plot.main = "Multitaper Spectrogram for Sinusoidal Setting"
-      plot.h = as.numeric(ebaout.bS$part.final[c(-1,-length(ebaout.bS$part.final))])
-      plot.data = X$bS
-      plot.log = ebaout.bS$log
-      plot.pvals = ebaout.bS$pvals
-      plot.flat = ebaout.bS$flat
-      
-    }
-    dat_type <- as.character(input$Simsetting)
-    list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
-         plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
-         plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat,
-         dat_type = dat_type)
-    
-  });
-  
-  
-  output$Image_Plot <- renderPlot({
-    par(mar=c(4,4,12,12))
-    vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
-                       just=c( "bottom"), y=0.6, x=0.475)
-    plot.new()
-    image.plot(x=plot.list()[[1]], y=plot.list()[[2]], z=plot.list()[[3]], 
-               axes = TRUE, col = inferno(256), 
-               xlab='Time',ylab='Hz',xaxs="i", 
-               bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5));title(plot.list()[[4]], line=0.75); 
-    abline(h=plot.list()[[5]], col = "skyblue", lwd=3)
-    if(plot.list()[[10]] == "W"){
-      act <- c("(0,0.5)")
-    } else {
-      abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
-      act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
-    }
-    vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
-                      just=c("left", "top"), y=0.5, x=0.6)
-    len <- length(plot.list()[[5]])
-    vals <- plot.list()[[5]]
-    if(len == 0){
-      str <- "(0, 0.5),"
-    } else if (len == 1) {
-      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
-    } else {
-      str <- paste("(0", sep="")
-      for(i in 1:len){
-        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
-      }
-      str <- paste(str, ",", "0.5),", sep="")
-    }
-    spp <- strsplit(str, "),")[[1]]
-    for(a in 1:length(spp)){
-      spp[a] <- paste(spp[a], ")", sep="")
-    }
-    max_len <- max(length(act), length(spp))
-    if(length(act) == length(spp)){
-      
-    } else if(length(act) > length(spp)){
-      sp_l <- length(spp) + 1
-      for(i in sp_l: length(act)){
-        spp[i] <- ""
-      }
-    } else {
-      ac_l <- length(act) + 1
-      for(i in ac_l: length(spp)){
-        act[i] <- ""
-      }
-    }
-    pp <- data.frame("Actual Frequency Bands" = act, "Predicted Frequency Bands" = spp)
-    colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
-    grid.table(pp, vp=vp.br, rows=NULL)
-    
-    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
-                     just=c("left", "top"), y=0.65, x=0.6)
-    grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
-    jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
-                      draw=TRUE)
-    
-    print( ggplot() + geom_line(aes(x=seq(0,1,length.out = length(plot.list()[[6]])), y= plot.list()[[6]])) + xlab("Time") +
-             ylab("") + ggtitle("Simulated Time Series Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-             scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top)
-    
-    
-     
-  }); 
-  output$summ_out_uni <- renderPlot({
-    pvals <- round(plot.list()[[7]][,4], 5)
-    pval.th <- round(plot.list()[[7]][,5], 5)
-    Sig <- character(length(pvals))
-    for(i in 1:length(Sig)){
-      if(pvals[i] < pval.th[i]){
-        Sig[i] <- "TRUE"
-      } else {
-        Sig[i] <- "FALSE"
-      }
-    }
-    pp <- data.frame("Frequency" = round(plot.list()[[7]][,2], 3), "P-Value" = round(plot.list()[[7]][,4], 5), 
-                     "P-Value\nThreshold" = round(plot.list()[[7]][,5], 5), "Significance" = as.character(Sig))
-    colnames(pp) <- c("Frequency", "P-Value", "P-Value \n Threshold", "Significant")
-    table <- tableGrob(pp, rows=NULL)
-    title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
-    blank1 <- textGrob("")
-    
-    len <- length(plot.list()[[5]])
-    vals <- plot.list()[[5]]
-    if(len == 0){
-      str <- "(0, 0.5),"
-    } else if (len == 1) {
-      str <- paste("(0, ", round(vals, 3), "), [", round(vals, 3), ", 0.5),", sep="")
-    } else {
-      str <- paste("(0", sep="")
-      for(i in 1:len){
-        str <- paste(str, ", ",round(vals[i], 3),"),[", round(vals[i], 3), sep="")
-      }
-      str <- paste(str, ",", "0.5),", sep="")
-    }
-    spp <- strsplit(str, "),")[[1]]
-    for(a in 1:length(spp)){
-      spp[a] <- paste(spp[a], ")", sep="")
-    }
-    pvals <- plot.list()[[9]][,2]
-    Res <- character(length(pvals))
-    Sig2 <- numeric(length(pvals))
-    for(i in 1:length(Res)){
-      if(pvals[i] < 0.05){
-        Res[i] = "Segment has \n nonflat spectrum"
-        Sig2[i] = "TRUE"
-      } else {
-        Res[i] = "Segment has \n flat spectrum"
-        Sig2[i] = "FALSE"
-      }
-    }
-    blank1 <- textGrob(""); blank2 <- textGrob("")
-    new_tab <- data.frame("Frequency Bands" = spp, "P-Values" = round(as.numeric(pvals), 5),"Significant" = Sig2 ,"Results" = Res)
-    colnames(new_tab) <- c("Frequency \n Bands", "P-Value", "Significant", "Results")
-    test1 <- tableGrob(new_tab, rows = NULL); 
-    title2 <- textGrob(expression(bold("Summary of Testing for Flat \n Spectrum in Each Segment")))
-    #grid.arrange(test1)
-    grid.arrange(title, table, title2, test1,blank2, heights = c(0.75,0.75,0.85,0.75, 1) ,nrow = 5)
-  })
+  #################################################
+  ## Start - Display Table containing results on
+  ## partiton testing for Observed, Univariate data
+  #################################################
   output$summ_out_uni_file <- renderPlot({
     pvals <- round(plot.list2()[[7]][,4], 5)
     pval.th <- round(plot.list2()[[7]][,5], 5)
@@ -2943,23 +3627,29 @@ server <- function(input,output, session) {
     #grid.arrange(test1)
     grid.arrange(title, table, title2, test1,blank2, heights = c(0.75,0.75,0.85,0.75, 1) ,nrow = 5)
   })
-  output$summ_pval_uni <- renderPlot({
-    #pvals <- plot.list()[[8]]
-    
-    #freqs <- names(pvals)
-    #vals <- unname(pvals)
-    
-    ggplot() + geom_point(aes(x = as.numeric(plot.list()[[8]][,1]), y = as.numeric(plot.list()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
-      xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-      geom_vline(xintercept = plot.list()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
-  })
+  #################################################
+  ## End - Display Table containing results on
+  ## partiton testing for Observed, Univariate data
+  #################################################
+  
+  #################################################
+  ## Start - Create Scatterplot of p-values for Partition
+  ## testing for Observed, Univariate data at each frequency
+  #################################################
   output$summ_pval_uni_file <- renderPlot({
-    
-    
     ggplot() + geom_point(aes(x = as.numeric(plot.list2()[[8]][,1]), y = as.numeric(plot.list2()[[8]][,2]))) + xlim(c(0,0.5)) + ylim(c(0,1)) + 
       xlab("Frequency") + ylab("P-Value") + ggtitle("P-Values for Testing Partition Points") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
       geom_vline(xintercept = plot.list2()[[5]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01))
   })
+  #################################################
+  ## End - Create Scatterplot of p-values for Partition
+  ## testing for Observed, Univariate data at each frequency
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Simulated, 
+  ## Univariate Data, to make them downloadable
+  #################################################
   output$downloadData <- downloadHandler(
     filename = function(){
       paste("Simulated_Output_Results","pdf",sep = ".") 
@@ -3095,6 +3785,15 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  #################################################
+  ## End - Recreate the above Plots for Simulated, 
+  ## Univariate Data, to make them downloadable
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Observed, 
+  ## Multivariate Data, to make them downloadable
+  #################################################
   output$downloadDataMv1_File <- downloadHandler(
     filename = function(){
       paste("Observed_Output_Results","pdf",sep = ".") 
@@ -3179,9 +3878,16 @@ server <- function(input,output, session) {
                  geom_vline(xintercept = plot.listMv2()[[4]], linetype = "dashed") + scale_x_continuous(expand=c(0,0), limits=c(0,0.5)) + scale_y_continuous(expand = c(0,0), limits=c(-0.01,1.01)), vp=vp.r)
       dev.off()
     }
-      
-    
   )
+  #################################################
+  ## End - Recreate the above Plots for Observed, 
+  ## Multivariate Data, to make them downloadable
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Observed, 
+  ## Functional Data, to make them downloadable
+  #################################################
   output$downloadDataFXN1_File <- downloadHandler(
     filename = function(){
       paste("Observed_Output_Results","pdf",sep = ".") 
@@ -3275,6 +3981,15 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  #################################################
+  ## End - Recreate the above Plots for Observed, 
+  ## Functional Data, to make them downloadable
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Simulated, 
+  ## Functional Data, to make them downloadable
+  #################################################
   output$downloadDataFXN1 <- downloadHandler(
     filename = function(){
       paste("Simulated_Output_Results","pdf",sep = ".") 
@@ -3387,6 +4102,15 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  #################################################
+  ## End - Recreate the above Plots for Simulated, 
+  ## Functional Data, to make them downloadable
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Simulated, 
+  ## Multivariate Data, to make them downloadable
+  #################################################
   output$downloadDataMV1 <- downloadHandler(
     filename = function(){
       paste("Simulated_Output_Results","pdf",sep = ".") 
@@ -3502,6 +4226,15 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  #################################################
+  ## End - Recreate the above Plots for Simulated, 
+  ## Multivariate Data, to make them downloadable
+  #################################################
+  
+  #################################################
+  ## Start - Recreate the above Plots for Observed, 
+  ## Univariate Data, to make them downloadable
+  #################################################
   output$downloadData1 <- downloadHandler(
     filename = function(){
       paste("Observed_Output_Results","pdf",sep = ".") 
@@ -3617,6 +4350,10 @@ server <- function(input,output, session) {
       dev.off()
     }
   )
+  #################################################
+  ## End - Recreate the above Plots for Observed, 
+  ## Univariate Data, to make them downloadable
+  #################################################
   
   
 }
