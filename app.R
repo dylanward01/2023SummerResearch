@@ -2093,7 +2093,13 @@ server <- function(input,output, session) {
       main = c("check")
       updateSliderInput(session, "x_F1_AA", max=dim(dataf)[1], min=1, value=1, step=1)
       updateSliderInput(session, "x_Mv_AA", min = 1, max=dim(dataf)[2], value=1, step=1)
-      list(dataf=dataf, main = main)}}
+      colnam <- colnames(dataf)
+      if(all(colnam == paste("V", 1:dim(dataf)[2], sep=""))){
+        names = F
+      } else {
+        names = T
+      }
+      list(dataf=dataf, main = main, colnames = colnam, names = names)}}
   )
   #######################################################
   ## End - Read in and store the chosen inputted data
@@ -2147,9 +2153,15 @@ server <- function(input,output, session) {
       output$test12121_AA <- renderText({
         paste(h4(strong("1")))
       })
-      output$Mv12121_AA <- renderText({
-        paste(h4(strong((paste("1")))))
-      })
+      if(plot.listbb()[[4]]){
+        output$Mv12121_AA <- renderText({
+          paste(h4(strong((paste(plot.listbb()[[3]][1])))))
+        })
+      } else {
+        output$Mv12121_AA <- renderText({
+          paste(h4(strong((paste("1")))))
+        }) 
+      }
       hide("MvbPlotDesc_file")
       hide("Mv1_file")
       hide("MvPlot22Desc_file")
@@ -2549,10 +2561,15 @@ server <- function(input,output, session) {
       
     } else {
       get_num <- as.numeric(input$x_Mv_AA)
-      
-      output$Mv12121_AA <- renderText({
-        paste(h4(strong((paste(get_num)))))
-      })
+      if(plot.listbb()[[4]]){
+        output$Mv12121_AA <- renderText({
+          paste(h4(strong((paste(plot.listbb()[[3]][get_num])))))
+        })
+      } else {
+        output$Mv12121_AA <- renderText({
+          paste(h4(strong((paste(get_num)))))
+        }) 
+      }
       output$Test_Mva_Plot1 <- renderPlotly({
         a <- ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,get_num]))) +
           xlab("Time") + ylab("") + ggtitle("Observed Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) +
@@ -2638,6 +2655,12 @@ server <- function(input,output, session) {
     req(file)
     validate(need(ext == "csv", "Please upload a csv file"))
     dataf <- read.csv(file$datapath, header = input$header)
+    component_names <- colnames(dataf)
+    if(all(component_names == paste("V", 1:dim(dataf)[2], sep=""))){
+      names = FALSE
+    } else {
+      names = TRUE
+    }
     dataf <- as.matrix(dataf)
     #################################################
     ## End - Read in the Data
@@ -2756,20 +2779,35 @@ server <- function(input,output, session) {
     # output$MvPlotaDesc <- renderText({
     #   paste(h4("Currently viewing component "))
     # })
-    output$Mv12121_AA <- renderText({
-       paste(h4(strong((paste("1")))))
-    })
+    if(names){
+      print("A")
+      first = component_names[1]
+      output$Mv12121_AA <- renderText({
+        paste(h4(strong((paste(first)))))
+      })
+      output$Mv2_file <- renderText({
+        paste(h4(strong((paste(first,"-",first,sep="")))))
+      })
+      output$BlankMv_file <- renderText({
+        paste(h4(strong((paste(first,"-",first,sep="")))))
+      })
+    } else {
+      print("B")
+      output$Mv12121_AA <- renderText({
+        paste(h4(strong((paste("1")))))
+      })
+      output$Mv2_file <- renderText({
+        paste(h4(strong((paste("1-1")))))
+      })
+      output$BlankMv_file <- renderText({
+        paste(h4(strong((paste("1-1")))))
+      })
+    }
     output$MvbPlotDesc_file <- renderText({
        paste(h4("Currently viewing cross-component "))
     })
     output$MvPlot22Desc_file <- renderText({
       paste(h4("Currently viewing cross-component "))
-    })
-    output$Mv2_file <- renderText({
-      paste(h4(strong((paste("1-1")))))
-    })
-    output$BlankMv_file <- renderText({
-      paste(h4(strong((paste("1-1")))))
     })
     check = "Test"
     #################################################
@@ -2777,7 +2815,8 @@ server <- function(input,output, session) {
     #################################################
     list(X = dataf, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
          comp_names = comp_names, thresh_bounds = thresh_bounds,
-         tested_freq = uni_fre, indexes=indexes, check = check)
+         tested_freq = uni_fre, indexes=indexes, check = check, component_names = component_names,
+         names=names)
   })
   
   #######################################################
@@ -2843,7 +2882,15 @@ server <- function(input,output, session) {
   #################################################
   observeEvent(input$plot1_MvCheck_file, {
     curr_num <- as.numeric(input$plot1_MvCheck_file)
-    curr_comp <- paste(curr_num, "-", curr_num, sep="")
+    if(is.na(plot.listMv2()[[11]])){
+      
+    } else {
+      if(plot.listMv2()[[13]]){
+      curr = plot.listMv2()[[12]][curr_num]
+      curr_comp <- paste(curr, "-", curr, sep="")
+    } else {
+      curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+    }
     output$Mv2_file <- renderText({
       paste(h4(strong((paste(curr_comp)))))
     })
@@ -2886,6 +2933,7 @@ server <- function(input,output, session) {
       )), vp=vp.r, 
       draw=TRUE)
     })
+    }
   })
   #################################################
   ## End - Update the Periodogram for the 
@@ -3025,7 +3073,15 @@ server <- function(input,output, session) {
   #################################################
   observeEvent(input$q11_Mv_file, ignoreNULL = TRUE, {
     curr_num <- as.numeric(input$q11_Mv_file)
-    curr_comp <- paste(curr_num, "-", curr_num, sep="")
+    if(is.na(plot.listMv2()[[11]])){
+      
+    } else {
+      if(plot.listMv2()[[13]]){
+      curr = plot.listMv2()[[12]][curr_num]
+      curr_comp <- paste(curr, "-", curr, sep="")
+    } else {
+      curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+    }
     output$BlankMv_file <- renderText({
       paste(h4(strong((paste(curr_comp)))))
     })
@@ -3036,7 +3092,7 @@ server <- function(input,output, session) {
                                                                                                                                                                     yaxis = list(title="Timepoint", range=c(0,1)), 
                                                                                                                                                                     zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
     })
-    
+    }
   })
   #################################################
   ## End - Update the 3-D Plot for the selected component
@@ -3804,11 +3860,16 @@ server <- function(input,output, session) {
       vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
                          just=c( "bottom"), y=0.6, x=0.475)
       curr_num <- as.numeric(input$plot1_MvCheck_file)
-      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      if(plot.listMv2()[[13]]){
+        curr <- plot.listMv2()[[12]][curr_num]
+        curr_comp <- paste(curr, "-", curr, sep="")
+      } else {
+        curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+      }
       image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv2()[[1]])[2],])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i",
-                 bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of Cross-Component", curr_comp), line=0.75)
+                 bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Local Periodogram of Cross-Component", curr_comp), line=0.75)
         abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
         vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
                           just=c("left", "top"), y=0.475, x=0.65)
@@ -3843,9 +3904,13 @@ server <- function(input,output, session) {
         )), vp=vp.r, 
         draw=TRUE)
         get_num <- as.numeric(input$x_Mv_AA)
-        
+        if(plot.listMv2()[[13]]){
+          comp_name <- plot.listMv2()[[12]][get_num]
+        } else {
+          comp_name = get_num
+        }
         print(ggplot() + geom_line(aes(x=seq(from=0, to=1, length.out=dim(plot.listbb()[[1]])[1]), y=as.numeric(plot.listbb()[[1]][,get_num]))) +
-            xlab("Time") + ylab("") + ggtitle(paste("Observed Data- Component", get_num)) + theme(plot.title = element_text(face="bold", hjust=0.5)) +
+            xlab("Time") + ylab("") + ggtitle(paste("Observed Data- Component", comp_name)) + theme(plot.title = element_text(face="bold", hjust=0.5)) +
             scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top)
         vp.r <- viewport(height=unit(1, "npc"), width=unit(0.5, "npc"), 
                          y=0.5, x=0.75)
