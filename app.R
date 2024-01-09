@@ -201,10 +201,13 @@ ui <- fluidPage(
                        
                        # Outputs for Simulated, Univariate Data
                        conditionalPanel(condition = "input.type == 'Univariate'",
-                       plotOutput("Image_Plot", height=1000, width=1000), # Plots Time Series and Local periodogram
+                       plotOutput("Image_Plotb", height=400, width = 1000), # Plots time series
+                       plotOutput("Image_Plot", height=600, width=1000), # Plots Local periodogram
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni", height = 500, width=500)), # Tables of Results for partition testing
-                         column(width = 5, plotOutput("summ_pval_uni", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                         splitLayout(cellWidths = c(500, 500),
+                         plotOutput("summ_out_uni", height = 500), # Tables of Results for partition testing
+                         plotOutput("summ_pval_uni", height = 500) # Scatterplot of p-values for partition testing
+                         )
                        ),
                        downloadButton('downloadData','Download the Above Results') , # Downloads the plots seen into a pdf
                        br(),
@@ -217,9 +220,11 @@ ui <- fluidPage(
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                        # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6,  htmlOutput("FxnPlotaDesc") ),
-                                column(width=4, hidden(htmlOutput("test12121"))),
-                                column(width=2, hidden(sliderInput(inputId = "x_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
+                                splitLayout(cellWidths = c(500,333,167), 
+                                htmlOutput("FxnPlotaDesc") ,
+                                hidden(htmlOutput("test12121")),
+                                hidden(sliderInput(inputId = "x_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
+                                )
                        ),
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -229,9 +234,11 @@ ui <- fluidPage(
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                        # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6,  htmlOutput("FxnbPlotDesc") ),
-                                column(width=4, htmlOutput("Blank2")),
-                                column(width=2, hidden(sliderInput("plot1_FxnCheck",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
+                                  splitLayout(cellWidths = c(500,333,167), 
+                                  htmlOutput("FxnbPlotDesc") ,
+                                htmlOutput("Blank2"),
+                                hidden(sliderInput("plot1_FxnCheck",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE))
+                                  )
                        ), 
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -243,14 +250,18 @@ ui <- fluidPage(
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6, htmlOutput("FxnPlot22Desc") ),
-                                column(width=4, htmlOutput("Blank10100")),
-                                column(width=2, hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
+                                splitLayout(cellWidths = c(500,333,167), 
+                                htmlOutput("FxnPlot22Desc"),
+                                htmlOutput("Blank10100"),
+                                hidden(sliderInput(inputId = "q11_F1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE))
+                                )
                        )
                        ), 
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_fxn", height = 500, width=500)), # Tables of Results for partition testing
-                         column(width = 5, plotOutput("summ_pval_fxn", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                         splitLayout(cellWidths = c(500,500), 
+                         plotOutput("summ_out_fxn", height = 500), # Tables of Results for partition testing
+                         plotOutput("summ_pval_fxn", height = 500) # Scatterplot of p-values for partition testing
+                         )
                        ), 
                        downloadButton('downloadDataFXN1','Download the Above Results'), # Downloads the plots seen into a pdf
                        br(),
@@ -263,9 +274,11 @@ ui <- fluidPage(
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6,  htmlOutput("MvPlotaDesc") ),
-                                column(width=4, hidden(htmlOutput("mv_testa"))),
-                                column(width=2, hidden(sliderInput(inputId = "mvX_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)))
+                                splitLayout(cellWidths = c(500,333,167), 
+                                htmlOutput("MvPlotaDesc"),
+                                hidden(htmlOutput("mv_testa")),
+                                hidden(sliderInput(inputId = "mvX_F1", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
+                                )
                        ),
                        tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -274,22 +287,28 @@ ui <- fluidPage(
                        plotOutput("Mv_Plotb", height=600, width = 1000), # Plots Local periodogram
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6,  htmlOutput("MvbPlotDesc") ),
-                                column(width=4, hidden(htmlOutput("mv_testb"))),
-                                column(width=2, hidden(sliderInput("mvX_F2",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
+                                splitLayout(cellWidths = c(500,333,167), 
+                                htmlOutput("MvbPlotDesc"),
+                                hidden(htmlOutput("mv_testb")),
+                                hidden(sliderInput("mvX_F2",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE))
+                                )
                        ),
                        conditionalPanel(condition = "input.Plot3DM == 'Include'",
                        plotlyOutput("Plotly_Mvb", height=600, width=1000), # 3-D Plot of Local periodogram
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                 # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                column(width=6,  htmlOutput("MvPlot22Desc") ),
-                                column(width=4, hidden(htmlOutput("Mv_10100"))),
-                                column(width=2, hidden(sliderInput(inputId = "q11_Mv1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE)))
+                                splitLayout(cellWidths = c(500,333,167), 
+                                htmlOutput("MvPlot22Desc"),
+                                hidden(htmlOutput("Mv_10100")),
+                                hidden(sliderInput(inputId = "q11_Mv1", min=1, max=10, step=1, value=1, label=NULL, width="125%", ticks=FALSE))
+                                )
                        )
                        ),
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_Mv", height = 500, width=500)), # Tables of Results for partition testing
-                         column(width = 5, plotOutput("summ_pval_Mv", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                         splitLayout(cellWidths = c(500,500), 
+                         plotOutput("summ_out_Mv", height = 500, width=500), # Tables of Results for partition testing
+                         plotOutput("summ_pval_Mv", height = 500, width = 500) # Scatterplot of p-values for partition testing
+                         )
                        ), 
                        
                        downloadButton('downloadDataMV1','Download the Above Results'), # Downloads the plots seen into a pdf
@@ -302,8 +321,10 @@ ui <- fluidPage(
                        plotOutput("Image_Plota", height=400, width=1000), # Plots data
                        plotOutput("Image_Plot2", height=600, width=1000), # Plots local periodogram
                        fluidRow(
-                         column(width = 5, plotOutput("summ_out_uni_file", height = 500, width=500)), # Table of Results for partition testing
-                         column(width = 5, plotOutput("summ_pval_uni_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                         splitLayout(cellWidths = c(500,500), 
+                         plotOutput("summ_out_uni_file", height = 500, width=500), # Table of Results for partition testing
+                         plotOutput("summ_pval_uni_file", height = 500, width = 500) # Scatterplot of p-values for partition testing
+                         )
                        ),
                        downloadButton('downloadData1','Download the Above Results'), # Downloads the plots seen into a pdf
                        br(),
@@ -315,9 +336,11 @@ ui <- fluidPage(
                                         
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                           # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                          column(width=6,  htmlOutput("FxnPlotaDesc_AA") ),
-                                          column(width=4, htmlOutput("test12121_AA")),
-                                          column(width=2, sliderInput(inputId = "x_F1_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
+                                          splitLayout(cellWidths = c(500,333,167), 
+                                          htmlOutput("FxnPlotaDesc_AA"),
+                                          htmlOutput("test12121_AA"),
+                                          sliderInput(inputId = "x_F1_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)
+                                          )
                                         ),
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -326,9 +349,11 @@ ui <- fluidPage(
                                         plotOutput("Fxn_Plotb_file", height=600, width=1000), # Plots Local periodogram
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                                 column(width=6,  htmlOutput("FxnbPlotDesc_file") ),
-                                                 column(width=4, htmlOutput("Blank2_file")),
-                                                 column(width=2, sliderInput("plot1_FxnCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE))
+                                                 splitLayout(cellWidths = c(500,333,167), 
+                                                 htmlOutput("FxnbPlotDesc_file"),
+                                                 htmlOutput("Blank2_file"),
+                                                 sliderInput("plot1_FxnCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)
+                                                 )
                                         ),
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -339,15 +364,19 @@ ui <- fluidPage(
                                         
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                                 column(width=6,  htmlOutput("FxnPlot22Desc_file") ),
-                                                 column(width=4, htmlOutput("Blank10100_file")),
-                                                 column(width=2, sliderInput(inputId = "q11_F1_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE))
+                                                 splitLayout(cellWidths = c(500,333,167), 
+                                                 htmlOutput("FxnPlot22Desc_file"),
+                                                 htmlOutput("Blank10100_file"),
+                                                 sliderInput(inputId = "q11_F1_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE)
+                                                 )
                                         ),
                                         
                                         ),
                                         fluidRow(
-                                          column(width = 5, plotOutput("summ_out_fxn_file", height = 500, width=500)), # Table of Results for Partition Testing
-                                          column(width = 5, plotOutput("summ_pval_fxn_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                                          splitLayout(cellWidths = c(500,500), 
+                                          plotOutput("summ_out_fxn_file", height = 500), # Table of Results for Partition Testing
+                                          plotOutput("summ_pval_fxn_file", height = 500) # Scatterplot of p-values for partition testing
+                                          )
                                         ), 
                                         downloadButton('downloadDataFXN1_File','Download the Above Results'), # Downloads the plots seen into a pdf
                                         br(),
@@ -360,9 +389,11 @@ ui <- fluidPage(
                                         plotlyOutput("Test_Mva_Plot1", width=1000), # Plots the data
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                                 column(width=6,  htmlOutput("MvPlotaDesc_AA") ),
-                                                 column(width=4, htmlOutput("Mv12121_AA")),
-                                                 column(width=2, sliderInput(inputId = "x_Mv_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE))
+                                                 splitLayout(cellWidths = c(500,333,167), 
+                                                 htmlOutput("MvPlotaDesc_AA"),
+                                                 htmlOutput("Mv12121_AA"),
+                                                 sliderInput(inputId = "x_Mv_AA", min=1, max=10, step=1, value=1,label=NULL, ticks = FALSE)
+                                                 )
                                         ),
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -370,9 +401,11 @@ ui <- fluidPage(
                                         plotOutput("Mv_Plotb_file", height=600, width=1000), # Plots Local periodogram
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                                 column(width=6,  htmlOutput("MvbPlotDesc_file") ),
-                                                 column(width=4, hidden(htmlOutput("Mv2_file"))),
-                                                 column(width=2, hidden(sliderInput("plot1_MvCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE)))
+                                                 splitLayout(cellWidths = c(500,333,167), 
+                                                 htmlOutput("MvbPlotDesc_file"),
+                                                 hidden(htmlOutput("Mv2_file")),
+                                                 hidden(sliderInput("plot1_MvCheck_file",min=1,max=10,step=1,value=1,label=NULL, ticks = FALSE))
+                                                 )
                                         ),
                                         tags$head(tags$style(HTML('.irs-from, .irs-min, .irs-to, .irs-max, .irs-single {
                                                  visibility: hidden !important;
@@ -381,15 +414,19 @@ ui <- fluidPage(
                                                          plotlyOutput("Plotly_Mvb_file", height=600, width=1000), # 3-D Plot of Local Periodogram
                                                          fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                                   # The 3 lines below give a description of above plot, with a slider to change data seen on plot
-                                                                  column(width=6,  htmlOutput("MvPlot22Desc_file") ),
-                                                                  column(width=4, hidden(htmlOutput("BlankMv_file"))),
-                                                                  column(width=2, hidden(sliderInput(inputId = "q11_Mv_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE)))
+                                                                  splitLayout(cellWidths = c(500,333,167), 
+                                                                  htmlOutput("MvPlot22Desc_file"),
+                                                                  hidden(htmlOutput("BlankMv_file")),
+                                                                  hidden(sliderInput(inputId = "q11_Mv_file", min=1, max=10, step=1, value=1, label=NULL,  ticks=FALSE))
+                                                                  )
                                                          ),
 
                                         ),
                                         fluidRow(
-                                          column(width = 5, plotOutput("summ_out_Mv_file", height = 500, width=500)), # Table of Results for Partition Testing
-                                          column(width = 5, plotOutput("summ_pval_Mv_file", height = 500, width = 500)) # Scatterplot of p-values for partition testing
+                                          splitLayout(cellWidths = c(500,500), 
+                                          plotOutput("summ_out_Mv_file", height = 500), # Table of Results for Partition Testing
+                                          plotOutput("summ_pval_Mv_file", height = 500) # Scatterplot of p-values for partition testing
+                                          )
                                         ),
                                         downloadButton('downloadDataMv1_File','Download the Above Results'), # Downloads the plots seen into a pdf
                                         br(),
@@ -1232,6 +1269,9 @@ server <- function(input,output, session) {
     res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
     colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
     sig <- which(plot.listMv()[[10]] %in% plot.listMv()[[4]])
+    if(length(sig) == 0){
+      sig = which.min(min_pval)
+    }
     res <- res[sig, ]
     res1 <- tableGrob(res, rows = NULL)
     title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
@@ -1557,7 +1597,7 @@ server <- function(input,output, session) {
   
   output$Fxn_Plotb <- renderPlot({
     image.plot(x=plot.listF1()[[1]],y=plot.listF1()[[2]],z=suppressWarnings(t(Re(plot.listF1()[[3]][,"1-1",]))), 
-               axes = TRUE, col = inferno(256), 
+               axes = TRUE, col = inferno(256),
                main = plot.listF1()[[4]],xlab='Time',ylab='Hz',xaxs="i",
                bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)); 
     abline(h=unname(plot.listF1()[[10]][which(plot.listF1()[[10]][,4] == 1), 1]), col="skyblue", lwd=3);
@@ -1901,16 +1941,16 @@ server <- function(input,output, session) {
   ## Start - Create both a plot of the data, and a
   ## plot of the Local Periodogram
   ################################################
-  
+  output$Image_Plotb <- renderPlot({
+    print( ggplot() + geom_line(aes(x=seq(0,1,length.out = length(plot.list()[[6]])), y= plot.list()[[6]])) + xlab("Time") +
+             ylab("") + ggtitle("Simulated Time Series Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
+             scale_x_continuous(limits=c(0,1), expand=c(0,0)))
+  })
   output$Image_Plot <- renderPlot({
-    par(mar=c(4,4,12,12))
-    vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
-                       just=c( "bottom"), y=0.6, x=0.475)
-    plot.new()
     image.plot(x=plot.list()[[1]], y=plot.list()[[2]], z=plot.list()[[3]], 
                axes = TRUE, col = inferno(256), 
-               xlab='Time',ylab='Hz',xaxs="i", 
-               bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5));title(plot.list()[[4]], line=0.75); 
+               xlab='Time',ylab='Hz',xaxs="i", main=plot.list()[[4]],
+               bigplot = c(.1, .55, .15, .85), smallplot = c(.6, .65, .15, .85)) 
     abline(h=plot.list()[[5]], col = "skyblue", lwd=3)
     if(plot.list()[[10]] == "W"){
       act <- c("(0,0.5)")
@@ -1918,8 +1958,8 @@ server <- function(input,output, session) {
       abline(h=c(0.15, 0.35), col="lawngreen", lwd=3)
       act <- c("(0, 0.15)", "[0.15, 0.35)", "[0.35, 0.5)")
     }
-    vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
-                      just=c("left", "top"), y=0.5, x=0.6)
+    vp.br <- viewport(height=unit(0.55, "npc"), width=unit(0.35, "npc"), 
+                      just=c("left", "top"), y=0.55, x=0.65)
     len <- length(plot.list()[[5]])
     vals <- plot.list()[[5]]
     if(len == 0){
@@ -1955,15 +1995,11 @@ server <- function(input,output, session) {
     colnames(pp) <- c("Actual \n Frequency Bands", "Predicted \n Frequency Bands")
     grid.table(pp, vp=vp.br, rows=NULL)
     
-    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.4, "npc"), 
-                     just=c("left", "top"), y=0.65, x=0.6)
-    grid.polygon(x=c(0.29, 0.29,0.71, 0.71), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
+    vp.r <- viewport(height=unit(0.5, "npc"), width=unit(0.325, "npc"), 
+                     just=c("left", "top"), y=0.95, x=0.65)
+    grid.polygon(x=c(0.25, 0.25,0.75, 0.75), y=c(0.6,0.4, 0.4,0.6 ), vp=vp.r)
     jj <- grid.legend(c("Predicted Partition Points", "Actual Partition Points"), gp=gpar(lty=1, lwd=3, col=c("skyblue", "lawngreen")), vp=vp.r, 
                       draw=TRUE)
-    
-    print( ggplot() + geom_line(aes(x=seq(0,1,length.out = length(plot.list()[[6]])), y= plot.list()[[6]])) + xlab("Time") +
-             ylab("") + ggtitle("Simulated Time Series Data") + theme(plot.title = element_text(face="bold", hjust=0.5)) + 
-             scale_x_continuous(limits=c(0,1), expand=c(0,0)), vp=vp.top)
   }); 
   
   ################################################
@@ -3041,6 +3077,9 @@ server <- function(input,output, session) {
       res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
       colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
       sig <- which(plot.listMv2()[[9]] %in% plot.listMv2()[[4]])
+      if(length(sig) == 0){
+        sig = which.min(min_pval)
+      }
       res <- res[sig, ]
       res1 <- tableGrob(res, rows = NULL)
       title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
@@ -3932,6 +3971,9 @@ server <- function(input,output, session) {
         res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
         colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
         sig <- which(plot.listMv2()[[9]] %in% plot.listMv2()[[4]])
+        if(length(sig) == 0){
+          sig = which.min(min_pval)
+        }
         res <- res[sig, ]
         res1 <- tableGrob(res, rows = NULL)
         title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
@@ -3966,7 +4008,7 @@ server <- function(input,output, session) {
       curr_num <- as.numeric(input$plot1_FxnCheck_file)
       curr_comp <-plot.listFxn2()[[5]][curr_num]
       if(strsplit(curr_comp, "-")[[1]][1] == strsplit(curr_comp,"-")[[1]][2]){
-        image.plot(x=plot.listFxn2()[[1]], y=plot.listFxn2()[[2]], z=t(Re(plot.listFxn2()[[3]][,curr_comp,])), 
+        image.plot(x=plot.listFxn2()[[1]], y=plot.listFxn2()[[2]], z=t(Re(plot.listFxn2()[[3]][,curr_comp,])),
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i", 
                    bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Multitaper Autospectrum of Component", curr_comp), line=0.75)
@@ -4280,6 +4322,9 @@ server <- function(input,output, session) {
         res <- data.frame("Freq" = freq, "val" = mod_pval, "t"=thresh, "s" = as.character(Sig))
         colnames(res) <- c("Frequency", "Minimum \n P-Value", "P-Value \n Threshold", "Significant")
         sig <- which(plot.listMv()[[10]] %in% plot.listMv()[[4]])
+        if(length(sig) == 0){
+          sig = which.min(min_pval)
+        }
         res <- res[sig, ]
         res1 <- tableGrob(res, rows = NULL)
         title <- textGrob(expression(bold("Summary of Partition \n      Point Tests")))
@@ -4419,7 +4464,6 @@ server <- function(input,output, session) {
   ## End - Recreate the above Plots for Observed, 
   ## Univariate Data, to make them downloadable
   #################################################
-  
   
 }
 
