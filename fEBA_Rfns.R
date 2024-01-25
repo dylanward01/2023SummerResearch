@@ -163,8 +163,9 @@ fEBA.wrapper <- function(X,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap=10^10){
 
       #display pass counter
       passctr <- passctr + 1;
-      message(paste("Pass ",passctr,sep=""));
-
+      #message(paste("Pass ",passctr,sep=""));
+      print(paste("Pass ",passctr,sep=""));
+      
       #identify changepoint candidates (Cpp functions)
       startf <- f.part[idx]+bw+dctr*dcap;
       endf <- min(f.part[idx+1]-bw,startf+dcap);

@@ -37,7 +37,7 @@ ui <- fluidPage(
     sidebarPanel(
       conditionalPanel(condition = "input.tabselected==1",
                        radioButtons("type", "Time Series Type", # Selects the type of Simulated Data to look at
-                                    choices=c("Univariate","Functional", "Multivariate"), 
+                                    choices=c("Univariate","Multivariate", "Functional"), 
                                     selected="Univariate"), 
                        
                        # Inputs for Simulated, Univariate Data
@@ -59,6 +59,7 @@ ui <- fluidPage(
                        actionButton("go", label = "Run"), # Runs the Algorithm based on our selected parameters
                       htmlOutput("Res"),
                       htmlOutput("Res1"),
+                      htmlOutput("Res2")
                       ), 
                       
                       # Inputs for Simulated, Functional Data
@@ -85,10 +86,11 @@ ui <- fluidPage(
                                   choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05), # Sets value for alpha
                       radioButtons(inputId = "TF_F1", label = "Standardize", 
                                    c("True" = TRUE, "False" = FALSE), selected = FALSE), # Lets us Standardize the Variance in each block
-                      actionButton("goF1", label = "Run \n (Warning: The Algorithm will take a while to run)"), # Runs the Algorithm based on our selected parameters
+                      actionButton("goF1", label = HTML("Run (Warning: <br/> The Algorithm will take a while to run)")), # Runs the Algorithm based on our selected parameters
                       htmlOutput("F1_1"),
                       htmlOutput("F1_2"),
-                      htmlOutput("F1_3")
+                      htmlOutput("F1_3"),
+                      htmlOutput("F1_4")
                       ),
                       
                       # Inputs for Simulated, Multivariate Data
@@ -109,10 +111,10 @@ ui <- fluidPage(
                                   choices=seq(from=5, to=50, by=5), selected=10), # Sets value for R
                       selectInput(inputId = "nrepMv", label="Choose the number of repetitions (nrep)",
                                   choices=c(100,500,1000,2000), selected=1000),# Sets value for nrep
-                      selectInput(inputId = "WselMv", label="Choose the number of different neighborhood pairings to test (Wsel)",
+                      selectInput(inputId = "WselMv", label="Choose the number of different neighborhood sizes for multiscale approach (Wsel)",
                                   choices=c(1,2,3,4,5), selected=3), # Sets value for Wsel
                       actionButton("goMv", label = "Run"), # Runs the Algorithm based on our selected parameters
-                      htmlOutput("Check111"),
+                      htmlOutput("Check111")
                       )),
       
       conditionalPanel(condition = "input.tabselected==2",
@@ -129,7 +131,7 @@ ui <- fluidPage(
                        
                        # This will pop up if the data chosen has more than one component, letting the user choose what type
                        # of data is being inputted
-                       hidden(radioButtons(inputId = "Data_Checker", label = NULL, choices = c("Functional", "Multivariate"), selected=character(0))),
+                       hidden(radioButtons(inputId = "Data_Checker", label = NULL, choices = c("Multivariate", "Functional"), selected=character(0))),
                        
                        # These below buttons will choose whether or not the 3D Plots are displayed, if we have either functional
                        # or multivariate data
@@ -171,7 +173,7 @@ ui <- fluidPage(
                                    choices=as.numeric(seq(0.01,0.05, by=0.01)), selected = 0.05)), # Sets value for alpha
                        hidden(radioButtons(inputId = "TF_Fxna", label = "Standardize", 
                                     c("True" = TRUE, "False" = FALSE), selected = FALSE)), # Lets us Standardize the Variance in each block
-                       hidden(actionButton("go_Fxna", label = "Run")), # Runs the Functional Algorithm based on our selected parameters
+                       hidden(actionButton("go_Fxna", label = HTML("Run (Warning: <br/> The Algorithm will take a while to run)"))), # Runs the Functional Algorithm based on our selected parameters
                        
                        # Inputs for Observed, Multivariate Data
                        
@@ -179,16 +181,19 @@ ui <- fluidPage(
                        # chunks of inputs will be hidden
                        hidden(selectInput(inputId = "nrepMv_file", label="Choose the number of repetitions (nrep)",
                                    choices=c(100,500,1000,2000), selected=1000)), # Sets value for nrep
-                       hidden(selectInput(inputId = "WselMv_file", label="Choose the number of different neighborhood pairings to test (Wsel)",
+                       hidden(selectInput(inputId = "WselMv_file", label="Choose the number of different neighborhood sizes for multiscale approach (Wsel)",
                                    choices=c(1,2,3,4,5), selected=3)), # Sets value for Wsel
                        hidden(actionButton("go_Mva", label= "Run")), # Runs the Multivariate Algorithm based on our selected parameters
                        
                        actionButton("go2", label = "Run"), # Runs the Univariate Algorithm based on our selected parameters
                        htmlOutput("res9"),
                        htmlOutput("res10"),
+                       htmlOutput("res11"),
                        hidden(htmlOutput("Fxn_AA")),
                        hidden(htmlOutput("Fxn_BB")),
-                       hidden(htmlOutput("Fxn_CC"))
+                       hidden(htmlOutput("Fxn_CC")),
+                       hidden(htmlOutput("Fxn_DD")),
+                       hidden(htmlOutput("Mv_AA"))
                        ), 
      
                       
@@ -216,6 +221,10 @@ ui <- fluidPage(
                        
                        # Outputs for Simulated, Functional Data
                        conditionalPanel(condition = "input.type == 'Functional'",
+                      
+                                        ####
+                        htmlOutput('SimFxn_text'),
+                                        ####
                        plotlyOutput("Fxn_Plota", height=400, width=1000), # Plots Data
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
@@ -263,13 +272,17 @@ ui <- fluidPage(
                          plotOutput("summ_pval_fxn", height = 500) # Scatterplot of p-values for partition testing
                          )
                        ), 
-                       downloadButton('downloadDataFXN1','Download the Above Results'), # Downloads the plots seen into a pdf
+                       hidden(downloadButton('downloadDataFXN1','Download the Above Results')), # Downloads the plots seen into a pdf
                        br(),
                        br(),
                        ),
                        
                        # Outputs for Simulated, Multivariate Data
                        conditionalPanel(condition = "input.type == 'Multivariate'",
+                                        
+                       ####
+                       htmlOutput('SimMv_text'),
+                       ####
                        plotlyOutput("Mv_Plota", height=400, width=1000), # Plots Data
                        
                        fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
@@ -311,7 +324,7 @@ ui <- fluidPage(
                          )
                        ), 
                        
-                       downloadButton('downloadDataMV1','Download the Above Results'), # Downloads the plots seen into a pdf
+                       hidden(downloadButton('downloadDataMV1','Download the Above Results')), # Downloads the plots seen into a pdf
                        br(),
                        br(),
       )),
@@ -332,6 +345,9 @@ ui <- fluidPage(
                        
                        # Outputs for Observed, Functional Data
                        conditionalPanel(condition = "input.Data_Checker== 'Functional'", 
+                                                      ####
+                                        htmlOutput('ObsFxn_text'),
+                                                      ####
                                         plotlyOutput("Test_Fxna_Plot1", width=1000), # Plots the data
                                         
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
@@ -378,7 +394,7 @@ ui <- fluidPage(
                                           plotOutput("summ_pval_fxn_file", height = 500) # Scatterplot of p-values for partition testing
                                           )
                                         ), 
-                                        downloadButton('downloadDataFXN1_File','Download the Above Results'), # Downloads the plots seen into a pdf
+                                        hidden(downloadButton('downloadDataFXN1_File','Download the Above Results')), # Downloads the plots seen into a pdf
                                         br(),
                                         br()
                                         
@@ -386,6 +402,9 @@ ui <- fluidPage(
                        
                        # Output for Observed, Multivariate Data
                        conditionalPanel(condition = "input.Data_Checker == 'Multivariate'",
+                                                      ####
+                                        htmlOutput('ObsMv_text'),
+                                                      ####
                                         plotlyOutput("Test_Mva_Plot1", width=1000), # Plots the data
                                         fluidRow(tags$head(tags$style(HTML(".shiny-split-layout > div {overflow: visible;}"))),
                                                  # The 3 lines below give a description of above plot, with a slider to change data seen on plot
@@ -428,7 +447,7 @@ ui <- fluidPage(
                                           plotOutput("summ_pval_Mv_file", height = 500) # Scatterplot of p-values for partition testing
                                           )
                                         ),
-                                        downloadButton('downloadDataMv1_File','Download the Above Results'), # Downloads the plots seen into a pdf
+                                        hidden(downloadButton('downloadDataMv1_File','Download the Above Results')), # Downloads the plots seen into a pdf
                                         br(),
                                         br()
                                         )
@@ -612,6 +631,9 @@ server <- function(input,output, session) {
                                      "/", HTML(paste(tags$sub(2))), " - 1> floor((K+1)(", HTML(paste(tags$sup("N"))), 
                                      "/", HTML(paste(tags$sub("N+1"))), "))"))))
   })
+  output$Res2 <- renderText({
+    paste(h6("For more explanation of the above terms, and the algorithm that is run, consult 'Empirical Frequency Band Analysis of Nonstationary Time Series' by Bruce, Tang, Hall, and Krafty (2019)"))
+  })
   output$F1_1 <- renderText({
     paste(h6("*Choices are T", HTML(paste(tags$sup("1/2"))), ", T", HTML(paste(tags$sup("2/3"))),
              ", or T",HTML(paste(tags$sup("3/4"))),", provided it satisfies 30 ", HTML("&le;"), "N", HTML("&le;"), "T"))
@@ -623,7 +645,14 @@ server <- function(input,output, session) {
   output$F1_3 <- renderText({
     paste(h6("***Choices are 5, or 10, provided it satisfies 1 ", HTML("&le;"), "Rsel", HTML("&le;"), "R"))
   })
-  
+  output$F1_4 <- renderText({
+    paste(h6("For more explanation of the above terms, and
+             the algorithm that is run, consult  'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
+  })
+  output$Check111 <- renderText({
+    paste(h6("For more explanation of the above terms, and
+             the algorithm that is run, consult 'Frequency Band Analysis of Nonstationary Multivariate Time Series' by Raanju R. Sundararajan and Scott A. Bruce (2023)"))
+  })
   output$res9 <- renderText({
     paste("*Please enter a dataframe")
   })
@@ -638,6 +667,16 @@ server <- function(input,output, session) {
   plot.listMv <- eventReactive(input$goMv, ignoreNULL = TRUE, {
     source("mEBA_Rfunctions.R")
     Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
+    hide("downloadDataMV1")
+    hide("MvPlotaDesc")
+    hide("mv_testa")
+    hide("mvX_F1")
+    hide("MvbPlotDesc")
+    hide("mv_testb")
+    hide("mvX_F2")
+    hide("MvPlot22Desc")
+    hide("Mv_10100")
+    hide("q11_Mv1")
     t = as.numeric(input$TsMv); #Length of Time Series
     R = as.numeric(input$RMv); #Number of Components
     nrep = as.numeric(input$nrepMv)
@@ -661,12 +700,6 @@ server <- function(input,output, session) {
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.wn,N,stdz=FALSE);
       
-      b.out=msboot(nrep=nrep, X.wn, Wsel=Wsel, stdz=FALSE, ncore=1)
-      
-      #plot output
-      #plot of observed test statistics across frequencies (red) and the first 50 bootstrap test statistics (black) for each W
-      
-      #table of significant frequency partition points (none in the white noise case)
       X = X.wn
     }
     
@@ -695,9 +728,6 @@ server <- function(input,output, session) {
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.s3b,N,stdz=FALSE);
       
-      b.out=msboot(nrep=nrep, X.s3b, Wsel=Wsel, stdz=FALSE, ncore=1)
-
-      #table of significant frequency partition points (none in the white noise case)
       X = X.s3b;
     }
     
@@ -724,9 +754,7 @@ server <- function(input,output, session) {
       N <- 2*floor(t^0.7)-floor(t^0.7/2)*2; #neighborhood for local periodogram
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.l3b,N,stdz=FALSE);
-      
-      b.out=msboot(nrep=nrep, X.l3b, Wsel=Wsel, stdz=FALSE, ncore=1)
-      
+    
       X = X.l3b;
     }
     
@@ -758,10 +786,7 @@ server <- function(input,output, session) {
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b1,N,stdz=FALSE);
       
-      b.out=msboot(nrep=nrep, X.m3b1, Wsel=Wsel, stdz=FALSE, ncore=1)
-      
       X = X.m3b1;
-      
       
     }
     
@@ -795,8 +820,6 @@ server <- function(input,output, session) {
       freq <- seq(0,floor(N/2),by=1)/N
       pse <- fhat(X.m3b2,N,stdz=FALSE);
       
-      b.out=msboot(nrep=nrep, X.m3b2, Wsel=Wsel, stdz=FALSE, ncore=1)
-      
       X = X.m3b2;
     }
     
@@ -813,9 +836,20 @@ server <- function(input,output, session) {
     ## Start - Gather Results from Algorithm, to display in 
     ## aforementioned plots
     #################################################
-    
-    method <- b.out
-    vals <- b.out[[4]][which(b.out[[4]][,2]==1),1]
+    #output$SimMv_text <- renderText({
+    #  paste(h4(strong("You can check the progress of the algorithm in the file 'sim-mEBA.txt', in the directory this
+    #                  application is located in. Rerunning the algorithm for Simulated, Multivariate data will overwrite
+    #                  the contents of the file, and closing the application will delete the file.")))
+    #})
+    shinyjs::html(id='SimMv_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'sim-mEBA.txt', in the directory this
+                      application is located in. Rerunning the algorithm for Simulated, Multivariate data will overwrite
+                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
+                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
+    show("SimMv_text")
+    sink("sim-mEBA.txt")
+    method <- msboot(nrep=nrep, X, Wsel=Wsel, stdz=FALSE, ncore=1)
+    sink()
+    vals <- method[[4]][which(method[[4]][,2]==1),1]
     indexes <- method[[4]][,2][method[[4]][,1]%in% method[[3]][[1]][,1]]
     thresh <- numeric(0)
     for(i in 1:nrow(method[[3]])){
@@ -847,45 +881,23 @@ server <- function(input,output, session) {
     sim_type <- input$SimSettingM
     dimnames(pse) <- list(freq,apply(expand.grid(1:R,1:R),1,paste,collapse = "-"),1:t);
     comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
-    conf <- numeric(length(pse))
-    dim(conf) <- dim(pse)
-    dimnames(conf) <- dimnames(pse)
     
     #################################################
     ## End - Gather Results from Algorithm, to display in 
     ## aforementioned plots
     #################################################
     
-    #################################################
-    ## Start - Find Signal Coherence Based on Power
-    ## Spectrum Estimate
-    #################################################
-    
-    for(k in 1:dim(pse)[3]){
-      for(j in 1:dim(pse)[2]){
-        first_col <- ((j - 1) %% (as.numeric(R))) + 1 
-        second_col <- ((j - 1) %/% (as.numeric(R))) + 1
-        cmpt_1 <- paste(first_col, "-", first_col, sep="")
-        cmpt_2 <- paste(second_col, "-", second_col, sep="")
-        for(i in 1:dim(pse)[1]){
-          if(first_col == second_col){
-            conf[i,j,k] <- Re(pse[i,j,k])
-          } else {
-            conf[i,j,k] <- Re((Mod(pse[i,j,k])**2) / (pse[i,cmpt_1,k] * pse[i,cmpt_2,k]))
-          }
-        }
-      }
-    }
-    
-    #################################################
-    ## End - Find Signal Coherence Based on Power
-    ## Spectrum Estimate
-    #################################################
     
     #################################################
     ## Start - Show and Update Sliders and Descriptors,
     ## and store important values for future use
     #################################################
+    hide("SimMv_text")
+    
+    show("MvPlotaDesc")
+    show("MvbPlotDesc")
+    show("MvPlot22Desc")
+    show("downloadDataMV1")
     
     show("mv_testa")
     show("mvX_F1")
@@ -903,18 +915,18 @@ server <- function(input,output, session) {
       paste(h4(strong((paste("1")))))
     })
     output$MvbPlotDesc <- renderText({
-      paste(h4("Currently viewing cross-component "))
+      paste(h4("Currently viewing component "))
     })
     output$MvPlot22Desc <- renderText({
-      paste(h4("Currently viewing cross-component "))
+      paste(h4("Currently viewing component "))
     })
     output$mv_testb <- renderText({
-      paste(h4(strong((paste("1-1")))))
+      paste(h4(strong((paste("1")))))
     })
     output$Mv_10100 <- renderText({
-      paste(h4(strong((paste("1-1")))))
+      paste(h4(strong((paste("1")))))
     })
-    list(X = X, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
+    list(X = X, pse = pse, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
          sim_type = sim_type, comp_names = comp_names, thresh_bounds = thresh_bounds, 
          tested_freq = uni_fre, indexes=indexes)
     #################################################
@@ -1054,7 +1066,7 @@ server <- function(input,output, session) {
     #if(is.na(plot.listF1()[[4]])){
     #  
     #} else {
-      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      curr_comp <- paste(curr_num)
       output$mv_testb <- renderText({
         paste(h4(strong((paste(curr_comp)))))
       })
@@ -1208,13 +1220,14 @@ server <- function(input,output, session) {
   ## Start - Initialize a 3-D plot, on the local periodogram
   ## of the 1-1 Component in our simulated multivariate data
   #################################################
-  
-  output$Plotly_Mvb <- renderPlotly({
-    plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
-            x=~plot.listMv()[[3]][-1],
-            z=~t(Re(plot.listMv()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
-                                                                                                     yaxis = list(title="Timepoint", range=c(0,1)), 
-                                                                                                     zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+  observeEvent(plot.listMv()[[7]], {
+    output$Plotly_Mvb <- renderPlotly({
+      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
+              x=~plot.listMv()[[3]][-1],
+              z=~t(Re(plot.listMv()[[2]][-1,1,])))  %>%layout(title="3D Representation of Local Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                           yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                           zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+    })
   })
   
   #################################################
@@ -1228,18 +1241,22 @@ server <- function(input,output, session) {
   #################################################
   
   observeEvent(input$q11_Mv1, ignoreNULL = TRUE, {
-    curr_num <- as.numeric(input$q11_Mv1)
-    curr_comp <- paste(curr_num, "-", curr_num, sep="")
-    output$Mv_10100 <- renderText({
-      paste(h4(strong((paste(curr_comp)))))
-    })
-    output$Plotly_Mvb <- renderPlotly({
-      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
-              x=~plot.listMv()[[3]][-1],
-              z=~t(Re(plot.listMv()[[2]][-1,curr_num + (curr_num-1)*ncol(plot.listMv()[[1]]),])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
-                                                                                                                                                                                      yaxis = list(title="Timepoint", range=c(0,1)), 
-                                                                                                                                                                                      zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
-    })
+    if(is.na(plot.listMv()[[7]])){
+      
+    } else {
+      curr_num <- as.numeric(input$q11_Mv1)
+      curr_comp <- paste(curr_num)
+      output$Mv_10100 <- renderText({
+        paste(h4(strong((paste(curr_comp)))))
+      })
+      output$Plotly_Mvb <- renderPlotly({
+        plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv()[[1]])),
+                x=~plot.listMv()[[3]][-1],
+                z=~t(Re(plot.listMv()[[2]][-1,curr_num + (curr_num-1)*ncol(plot.listMv()[[1]]),])))  %>%layout(title="3D Representation of Local Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                                                                            yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                                                                            zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+      }) 
+    }
     
   })
   
@@ -1304,6 +1321,18 @@ server <- function(input,output, session) {
   ## Event Reactive Block End point for the Simulated 
   ## Multivariate algorithm
   #######################################################
+  test_reactive <- eventReactive(input$goF1, ignoreNULL=TRUE, {
+    i = 1
+    check="check"
+    while(i <= 60){
+      print(i)
+      shinyjs::html(id = 'text',  paste("This is ", i, sep=""))
+      date_time<-Sys.time()
+      while((as.numeric(Sys.time()) - as.numeric(date_time))<1){} #dummy while loop
+      i = i + 1
+    }
+    list(check = check)
+  })
   
   #######################################################
   ## Event Reactive Block Start point for the Simulated 
@@ -1313,7 +1342,22 @@ server <- function(input,output, session) {
   plot.listF1 <- eventReactive(input$goF1, ignoreNULL = TRUE, {
     source("fEBA_Rfns.R")
     Rcpp::sourceCpp("fEBA_072321.cpp")
-    
+    output$Fxn_Plota <- renderPlotly({
+      
+    })
+    output$Plotly_Fxna <- renderPlotly({
+      
+    })
+    hide("downloadDataFXN1")
+    hide("FxnPlotaDesc")
+    hide("test12121")
+    hide("x_F1")
+    hide("FxnbPlotDesc")
+    hide("Blank2")
+    hide("plot1_FxnCheck")
+    hide("FxnPlot22Desc")
+    hide("Blank10100")
+    hide("q11_F1")
     ##get sim data
     nb=15; #number of basis functions used to generate white noise
     R=as.numeric(input$RF1); #number of points in functional domain
@@ -1389,14 +1433,20 @@ server <- function(input,output, session) {
     blockdiag=TRUE; #use block diagonal covariance matrix approximation
     dcap=40; #max number of frequencies tested in a given pass 
     alpha=as.numeric(input$AlphaF1)/ceiling((1-2*bw/0.5)*(floor(N/2)+1)/dcap); #alpha with Bonferroni correction
-    
+    shinyjs::html(id='SimFxn_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'sim-fEBA.txt', in the directory this
+                      application is located in. Rerunning the algorithm for Simulated, Functional data will overwrite
+                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
+                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
+    show("SimFxn_text")
+    sink("sim-fEBA.txt")
     res <- fEBA.wrapper(X,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap);
+    sink()
     ##View test statistics and p-values over frequencies
     tmp=cbind(as.numeric(unlist(lapply(res$log, function(x) rownames(x$Qint)))),
               unlist(lapply(res$log, function(x) x$Qint)),
               unlist(lapply(res$log, function(x) x$Qpv[,'Qint'])));
     tmp=tmp[!duplicated(tmp[,1]),];
-    
+    hide("SimFxn_text")
     #################################################################
     ## End - Algorithm Execution based on aforementioned data ##
     #################################################################
@@ -1460,6 +1510,10 @@ server <- function(input,output, session) {
     output$FxnPlot22Desc <- renderText({
       paste(h4("Currently viewing component "))
     })
+    show("downloadDataFXN1")
+    show("FxnPlotaDesc")
+    show("FxnbPlotDesc")
+    show("FxnPlot22Desc")
     show("x_F1")
     show("q_F1")
     show("q11_F1")
@@ -1516,6 +1570,8 @@ server <- function(input,output, session) {
     #################################################
   });
   
+  
+  
   #################################################################
   ## Start - Update Plot based on selected timepoint of our simulated 
   ## Functional data 
@@ -1543,6 +1599,27 @@ server <- function(input,output, session) {
   ## End - Update Plot based on selected timepoint of our simulated 
   ## Functional data 
   #################################################################
+  
+  # observe({
+  #   if(exists("example.txt")){
+  #     fileData <- reactiveFileReader(1000, session, "example.txt", read.delim, header=F)
+  #     
+  #     output$text <- renderTable({
+  #       fileData()
+  #     })  
+  #   } else{
+  #     print("Yes")
+  #   }
+  # })
+  
+  # observe({ 
+  #   ## read the text file once every 50 ms
+  #   invalidateLater(50, session)
+  #   req(file.exists("example.txt")) 
+  #   txt <- paste(readLines("example.txt"), collapse = "\n") 
+  #   output$text <- renderText(txt)
+  # }) 
+  
   
   #################################################
   ## Start - Display Table containing results on 
@@ -2127,6 +2204,8 @@ server <- function(input,output, session) {
         updateSelectInput(session, "Rsel_Fxna", choices = 5, selected = 5)
       }
       main = c("check")
+      show("x_Mv_AA"); show("x_F1_AA")
+      show("MvPlotaDesc_AA"); show("Mv12121_AA")
       updateSliderInput(session, "x_F1_AA", max=dim(dataf)[1], min=1, value=1, step=1)
       updateSliderInput(session, "x_Mv_AA", min = 1, max=dim(dataf)[2], value=1, step=1)
       colnam <- colnames(dataf)
@@ -2135,6 +2214,13 @@ server <- function(input,output, session) {
       } else {
         names = T
       }
+      output$FxnPlotaDesc_AA <- renderText({
+        paste(h4("Currently viewing timepoint "))
+      })
+      output$MvPlotaDesc_AA <- renderText({
+        paste(h4("Currently viewing component "))
+      })
+      
       list(dataf=dataf, main = main, colnames = colnam, names = names)}}
   )
   #######################################################
@@ -2296,6 +2382,8 @@ server <- function(input,output, session) {
       hide("Fxn_AA")
       hide("Fxn_BB")
       hide("Fxn_CC")
+      hide("Fxn_DD")
+      hide("Mv_AA")
       hide("Signi_Fxna")
       hide("TF_Fxna")
       hide("go_Fxna")
@@ -2311,6 +2399,7 @@ server <- function(input,output, session) {
       show("go2")
       show("res9")
       show("res10")
+      show("res11")
       show("Image_Plota")
       show("Image_Plot2")
       show("downloadData1")
@@ -2353,6 +2442,7 @@ server <- function(input,output, session) {
       hide("go2")
       hide("res9")
       hide("res10")
+      hide("res11")
       hide("Image_Plota")
       hide("Image_Plot2")
       hide("downloadData1")
@@ -2396,13 +2486,24 @@ server <- function(input,output, session) {
         paste(h6("**Valid choices range from 1 to ", floor(sqrt(dim(plot.listbb()[[1]])[1]) / 4 - 1) - 1, "as we need to satisfy 1", HTML("&le;"), 
                  "K < floor(N/4 - 1)"))
       })
+      output$Fxn_DD <- renderText({
+        paste(h6("For more explanation of the above terms, and
+             the algorithm that is run, consult  'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
+      })
+      show("Fxn_DD")
       show("Fxn_CC")
       hide("Ts_Mv_Dim")
       hide("nrepMv_file")
       hide("WselMv_file")
       hide("go_Mva")
       hide("Plot3D_FileM")
+      hide("Mv_AA")
     } else {
+      output$Mv_AA <- renderText({
+        paste(h6("For more explanation of the above terms, and
+             the algorithm that is run, consult 'Frequency Band Analysis of Nonstationary Multivariate Time Series' by Raanju R. Sundararajan and Scott A. Bruce (2023)"))
+      })
+      show("Mv_AA")
       hide("Plot3D_File")
       hide("Num_Fxna")
       hide("Tapers_Fxna")
@@ -2414,6 +2515,7 @@ server <- function(input,output, session) {
       hide("Fxn_AA")
       hide("Fxn_BB")
       hide("Fxn_CC")
+      hide("Fxn_DD")
       show("Ts_Mv_Dim")
       show("nrepMv_file")
       show("WselMv_file")
@@ -2519,6 +2621,9 @@ server <- function(input,output, session) {
         paste(h6("**Valid choices range from 1 to ", (i-1), "as we need to satisfy ", HTML(paste(tags$sup("floor(N/2)"))), 
                  "/", HTML(paste(tags$sub(2))), " - 1> floor((K+1)(", HTML(paste(tags$sup("N"))), 
                  "/", HTML(paste(tags$sub("N+1"))), "))"))
+      })
+      output$res11 <- renderText({
+        paste(h6("For more explanation of the above terms, and the algorithm that is run, consult 'Empirical Frequency Band Analysis of Nonstationary Time Series' by Bruce, Tang, Hall, and Krafty (2019)"))
       })
     } 
     }
@@ -2657,25 +2762,6 @@ server <- function(input,output, session) {
   #######################################################
   
   #######################################################
-  ## Start- Set the text of various descriptors to be 
-  ## used on the File Upload side of the app
-  #######################################################
-  
-  show("FxnPlotaDesc_AA")
-  output$FxnPlotaDesc_AA <- renderText({
-    paste(h4("Currently viewing timepoint "))
-  })
-  show("MvPlotaDesc_AA")
-  output$MvPlotaDesc_AA <- renderText({
-    paste(h4("Currently viewing component "))
-  })
-  
-  #######################################################
-  ## End- Set the text of various descriptors to be 
-  ## used on the File Upload side of the app
-  #######################################################
-  
-  #######################################################
   ## Event Reactive Block Start point for the Observed 
   ## Multivariate algorithm
   #######################################################
@@ -2683,6 +2769,13 @@ server <- function(input,output, session) {
   plot.listMv2 <- eventReactive(input$go_Mva, ignoreNULL = FALSE, {
     source("mEBA_Rfunctions.R")
     Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
+    hide("downloadDataMv1_File")
+    hide("MvbPlotDesc_file")
+    hide("Mv2_file")
+    hide("plot1_MvCheck_file")
+    hide("MvPlot22Desc_file")
+    hide("BlankMv_file")
+    hide("q11_Mv_file")
     #################################################
     ## Start - Read in the Data
     #################################################
@@ -2722,7 +2815,14 @@ server <- function(input,output, session) {
     #################################################
     pse <- fhat(dataf,N,stdz=FALSE);
     gpse <- ghat(pse);
+    shinyjs::html(id='ObsMv_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'obs-mEBA.txt', in the directory this
+                      application is located in. Rerunning the algorithm for Observed, Multivariate data will overwrite
+                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
+                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
+    show("ObsMv_text")
+    sink("obs-mEBA.txt")
     b.out=msboot(nrep=nrep, dataf, Wsel=Wsel, stdz=FALSE, ncore=1)
+    sink()
     method <- b.out
     #################################################
     ## End - Run the algorithm
@@ -2761,42 +2861,19 @@ server <- function(input,output, session) {
     }
     uni_fre <- unique(fre)
     dimnames(pse) <- list(freq,apply(expand.grid(1:R,1:R),1,paste,collapse = "-"),1:t);
-    conf <- numeric(length(pse))
-    dim(conf) <- dim(pse)
-    dimnames(conf) <- dimnames(pse)
     #################################################
     ## End - Save and store values from algorithm
     #################################################
 
-    #################################################
-    ## Start - Find Signal Coherence Based on Power
-    ## Spectrum Estimate
-    #################################################
-    for(k in 1:dim(pse)[3]){
-      for(j in 1:dim(pse)[2]){
-        first_col <- ((j - 1) %% (as.numeric(R))) + 1
-        second_col <- ((j - 1) %/% (as.numeric(R))) + 1
-        cmpt_1 <- paste(first_col, "-", first_col, sep="")
-        cmpt_2 <- paste(second_col, "-", second_col, sep="")
-        for(i in 1:dim(pse)[1]){
-          if(first_col == second_col){
-            conf[i,j,k] <- Re(pse[i,j,k])
-          } else {
-            conf[i,j,k] <- Re((Mod(pse[i,j,k])**2) / (pse[i,cmpt_1,k] * pse[i,cmpt_2,k]))
-          }
-        }
-      }
-    }
-    #################################################
-    ## End - Find Signal Coherence Based on Power
-    ## Spectrum Estimate
-    #################################################
     comp_names <- apply(expand.grid(1:R,1:R),1,paste,collapse = "-")
 
 
     #################################################
     ## Start - Update Descriptors and Sliders
     #################################################
+    hide("ObsMv_text")
+    
+    show("MvPlotaDesc_AA")
     show("Mv12121_AA")
     show("x_Mv_AA")
     show("Mv2_file")
@@ -2808,6 +2885,7 @@ server <- function(input,output, session) {
     show("summ_pval_Mv_file")
     show("MvbPlotDesc_file")
     show("MvPlot22Desc_file")
+    show("downloadDataMv1_File")
     # show("q11_Mv1")
     updateSliderInput(session, "x_Mv_AA", min = 1, max=as.numeric(R), value=1, step=1)
     updateSliderInput(session, "plot1_MvCheck_file", min = 1, max=as.numeric(R), value=1, step=1)
@@ -2816,40 +2894,41 @@ server <- function(input,output, session) {
     #   paste(h4("Currently viewing component "))
     # })
     if(names){
-      print("A")
       first = component_names[1]
       output$Mv12121_AA <- renderText({
         paste(h4(strong((paste(first)))))
       })
       output$Mv2_file <- renderText({
-        paste(h4(strong((paste(first,"-",first,sep="")))))
+        paste(h4(strong((paste(first)))))
       })
       output$BlankMv_file <- renderText({
-        paste(h4(strong((paste(first,"-",first,sep="")))))
+        paste(h4(strong((paste(first)))))
       })
     } else {
-      print("B")
       output$Mv12121_AA <- renderText({
         paste(h4(strong((paste("1")))))
       })
       output$Mv2_file <- renderText({
-        paste(h4(strong((paste("1-1")))))
+        paste(h4(strong((paste("1")))))
       })
       output$BlankMv_file <- renderText({
-        paste(h4(strong((paste("1-1")))))
+        paste(h4(strong((paste("1")))))
       })
     }
     output$MvbPlotDesc_file <- renderText({
-       paste(h4("Currently viewing cross-component "))
+       paste(h4("Currently viewing component "))
     })
     output$MvPlot22Desc_file <- renderText({
-      paste(h4("Currently viewing cross-component "))
+      paste(h4("Currently viewing component "))
+    })
+    output$MvPlotaDesc_AA <- renderText({
+      paste(h4("Currently viewing component "))
     })
     check = "Test"
     #################################################
     ## End - Update Descriptors and Sliders
     #################################################
-    list(X = dataf, conf = conf, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
+    list(X = dataf, pse = pse, freq = freq, vals = vals, min_val = min_val, mod_val = mod_val,
          comp_names = comp_names, thresh_bounds = thresh_bounds,
          tested_freq = uni_fre, indexes=indexes, check = check, component_names = component_names,
          names=names)
@@ -2923,9 +3002,9 @@ server <- function(input,output, session) {
     } else {
       if(plot.listMv2()[[13]]){
       curr = plot.listMv2()[[12]][curr_num]
-      curr_comp <- paste(curr, "-", curr, sep="")
+      curr_comp <- paste(curr)
     } else {
-      curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+      curr_comp <- paste(curr_num) 
     }
     output$Mv2_file <- renderText({
       paste(h4(strong((paste(curr_comp)))))
@@ -2980,12 +3059,14 @@ server <- function(input,output, session) {
   ## Start - Initalize the 3-D Plot for the 1-1 component
   ## of the periodogram for observed, multivariate data
   #################################################
-  output$Plotly_Mvb_file <- renderPlotly({
-    plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
-            x=~plot.listMv2()[[3]][-1],
-            z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
-                                                                                                                   yaxis = list(title="Timepoint", range=c(0,1)), 
-                                                                                                                   zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+  observeEvent(plot.listMv2()[[11]], {
+    output$Plotly_Mvb_file <- renderPlotly({
+      plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
+              x=~plot.listMv2()[[3]][-1],
+              z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Local Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+                                                                                                                            yaxis = list(title="Timepoint", range=c(0,1)), 
+                                                                                                                            zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
+    })
   })
   #################################################
   ## End - Initalize the 3-D Plot for the 1-1 component
@@ -3048,7 +3129,7 @@ server <- function(input,output, session) {
     output$Plotly_Mvb_file <- renderPlotly({
       plot_ly(y=~seq(from=0, to=1, length.out=nrow(plot.listMv2()[[1]])),
               x=~plot.listMv2()[[3]][-1],
-              z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
+              z=~t(Re(plot.listMv2()[[2]][-1,1,])))  %>%layout(title="3D Representation of Local Periodogram",scene = list( xaxis = list(title='Frequency',range = c(0.5, 0)), 
                                                                                                                       yaxis = list(title="Timepoint", range=c(0,1)), 
                                                                                                                       zaxis = list(title="Value"))) %>% add_surface() %>% colorbar(title="Value", len=1)
     })
@@ -3117,9 +3198,9 @@ server <- function(input,output, session) {
     } else {
       if(plot.listMv2()[[13]]){
       curr = plot.listMv2()[[12]][curr_num]
-      curr_comp <- paste(curr, "-", curr, sep="")
+      curr_comp <- paste(curr)
     } else {
-      curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+      curr_comp <- paste(curr_num) 
     }
     output$BlankMv_file <- renderText({
       paste(h4(strong((paste(curr_comp)))))
@@ -3145,6 +3226,13 @@ server <- function(input,output, session) {
   plot.listFxn2 <- eventReactive(input$go_Fxna,  {
     source("fEBA_Rfns.R")
     Rcpp::sourceCpp("fEBA_072321.cpp")
+    hide("FxnbPlotDesc_file")
+    hide("Blank2_file")
+    hide("plot1_FxnCheck_file")
+    hide("FxnPlot22Desc_file")
+    hide("Blank10100_file")
+    hide("q11_F1_file")
+    hide("downloadDataFXN1_File")
     #################################################
     ## Start - Read in the Data
     #################################################
@@ -3220,8 +3308,14 @@ server <- function(input,output, session) {
     blockdiag=TRUE; #use block diagonal covariance matrix approximation
     dcap=40; #max number of frequencies tested in a given pass 
     alpha=as.numeric(input$Signi_Fxna)/ceiling((1-2*bw/0.5)*(floor(N/2)+1)/dcap); #alpha with Bonferroni correction
-    
+    shinyjs::html(id='ObsFxn_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'obs-fEBA.txt', in the directory this
+                      application is located in. Rerunning the algorithm for Observed, Functional data will overwrite
+                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
+                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
+    show("ObsFxn_text")
+    sink("obs-fEBA.txt")
     res <- fEBA.wrapper(dataf,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap);
+    sink()
     ##View test statistics and p-values over frequencies
     tmp=cbind(as.numeric(unlist(lapply(res$log, function(x) rownames(x$Qint)))),
               unlist(lapply(res$log, function(x) x$Qint)),
@@ -3237,13 +3331,21 @@ server <- function(input,output, session) {
     #################################################
     ## Start - Update Descriptors and Sliders
     #################################################
+    output$FxnPlotaDesc_AA <- renderText({
+      paste(h4("Currently viewing timepoint "))
+    })
     output$FxnbPlotDesc_file <- renderText({
       paste(h4("Currently viewing component "))
     })
     output$FxnPlot22Desc_file <- renderText({
       paste(h4("Currently viewing component "))
     })
+    hide("ObsFxn_text")
     
+    show("FxnPlotaDesc_AA")
+    show("FxnbPlotDesc_file")
+    show("FxnPlot22Desc_file")
+    show("Blank10100_file")
     show("x_F1_AA")
     #show("q_F1")
     show("q11_F1_file")
@@ -3901,14 +4003,14 @@ server <- function(input,output, session) {
       curr_num <- as.numeric(input$plot1_MvCheck_file)
       if(plot.listMv2()[[13]]){
         curr <- plot.listMv2()[[12]][curr_num]
-        curr_comp <- paste(curr, "-", curr, sep="")
+        curr_comp <- paste(curr)
       } else {
-        curr_comp <- paste(curr_num, "-", curr_num, sep="") 
+        curr_comp <- paste(curr_num) 
       }
       image.plot(x=(1:as.numeric(dim(plot.listMv2()[[1]])[1])) / (as.numeric(dim(plot.listMv2()[[1]])[1])),y=plot.listMv2()[[3]][-1],z=t(Re(plot.listMv2()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv2()[[1]])[2],])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i",
-                 bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Local Periodogram of Cross-Component", curr_comp), line=0.75)
+                 bigplot = c(.1, .55, .1, .5), smallplot = c(.6, .65, .1, .5)); title(paste("Local Periodogram of Component", curr_comp), line=0.75)
         abline(h=plot.listMv2()[[4]], col="skyblue", lwd=3);
         vp.br <- viewport(height=unit(0.5, "npc"), width=unit(0.43, "npc"), 
                           just=c("left", "top"), y=0.475, x=0.65)
@@ -4228,12 +4330,12 @@ server <- function(input,output, session) {
       vp.top <- viewport(height=unit(0.4, "npc"), width=unit(0.8, "npc"),
                          just=c( "bottom"), y=0.6, x=0.475)
       curr_num <- as.numeric(input$mvX_F2)
-      curr_comp <- paste(curr_num, "-", curr_num, sep="")
+      curr_comp <- paste(curr_num)
       
         image.plot(x=(1:as.numeric(dim(plot.listMv()[[1]])[1])) / (as.numeric(dim(plot.listMv()[[1]])[1])),y=plot.listMv()[[3]][-1],z=t(Re(plot.listMv()[[2]][-1,curr_num+(curr_num-1)*dim(plot.listMv()[[1]])[2],])), 
                    axes = TRUE, col = inferno(256), 
                    xlab='Time',ylab='Hz',xaxs="i",
-                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525)); title(paste("Multitaper Autospectrum of Cross-Component", curr_comp), line=0.75)
+                   bigplot = c(.125, .575, .125, .525), smallplot = c(.6, .65, .125, .525)); title(paste("Multitaper Autospectrum of Component", curr_comp), line=0.75)
         abline(h=plot.listMv()[[4]], col="skyblue", lwd=3);
         if(plot.listMv()[[7]] != 'W'){
           abline(h=c(0.15, 0.35), col="lawngreen", lwd=3) 
@@ -4464,7 +4566,27 @@ server <- function(input,output, session) {
   ## End - Recreate the above Plots for Observed, 
   ## Univariate Data, to make them downloadable
   #################################################
-  
+ 
+  #################################################
+  ## Start - Delete Sink Files created as app ran
+  #################################################
+  session$onSessionEnded(function() {
+    if(file.exists("sim-mEBA.txt")){
+      file.remove("sim-mEBA.txt")
+    }
+    if(file.exists("sim-fEBA.txt")){
+      file.remove("sim-fEBA.txt")
+    }
+    if(file.exists("obs-mEBA.txt")){
+      file.remove("obs-mEBA.txt")
+    }
+    if(file.exists("obs-fEBA.txt")){
+      file.remove("obs-fEBA.txt")
+    }
+  })
+  #################################################
+  ## End - Delete Sink Files created as app ran
+  #################################################
 }
 
 shinyApp(ui = ui, server = server)

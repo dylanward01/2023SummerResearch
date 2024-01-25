@@ -479,6 +479,7 @@ arma::vec hstepup(arma::vec pval,double alpha){
   return out;
 }  
 
+
 // [[Rcpp::export]]
 Rcpp::List fEBA(arma::cx_cube fhat, arma::cx_cube ghat,
                 int K, int ndraw, double alpha, bool blockdiag){
@@ -493,9 +494,8 @@ Rcpp::List fEBA(arma::cx_cube fhat, arma::cx_cube ghat,
   
   //pvalues for each frequency
   arma::mat Qpv(Fs-1,Rsq+1,fill::zeros);
-  #pragma omp parallel for
   for (int i=1;i<Fs;i++){
-    // Rcout <<  "Computing p-value for frequency " << i << " of " << Fs-1 <<"\r";
+    Rcout <<  "Computing p-value for frequency " << i << " of " << Fs-1 <<"\r";
     Qpv.row(i-1)=trans(Qpval(fhat.subcube(0,0,0,i,Rsq-1,B-1),K,ndraw,trans(Qts.row(i-1)),Qint(i-1),blockdiag));
   }
   
@@ -504,12 +504,12 @@ Rcpp::List fEBA(arma::cx_cube fhat, arma::cx_cube ghat,
   for (int i=0;i<Rsq+1;i++){
     Qhb.col(i)=hstepup(Qpv.col(i),alpha);
   }
-
   //compile results and output
   Rcpp::List out=List::create(Qts,Qint,Qpv,Qhb);
   
   return out;
 }
+
 
 
 /*** R
