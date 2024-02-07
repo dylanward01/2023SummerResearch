@@ -222,8 +222,8 @@ eba.search <- function(X,N,K,std,alpha){
     stop("K cannot be non-finite or missing.")
   }else if(!(class(K) == 'numeric' && length(K)==1 && K%%1==0 && K>0)){
     stop("K must be an integer greater than zero.");
-  }else if(K > floor(2*N*.15-1)){
-    stop("K should be smaller for good frequency resolution.  K=floor(2*N*bandwidth-1) is recommended.")
+  }else if(floor(N/2) / 2 - 1 <= floor((K+1)*( N/(N+1) ))){
+    stop("K should be smaller for good frequency resolution.")
   }
   
   #partition series into segments of size N

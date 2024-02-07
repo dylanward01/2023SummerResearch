@@ -133,7 +133,40 @@ f3bS.sim <- function(nb,gsz,Ts,seed){
 
 #function to run iterative eba algorithm
 fEBA.wrapper <- function(X,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap=10^10){
-
+  #check function arguments and specify defaults
+  if(!(sum(!is.na(as.numeric(X))) == length(X))){
+    stop("X must contain only numeric values.")
+  }else if(length(X) == 0){
+    stop("X must have length greater than zero.")
+  }else if(any(!is.finite(X))){
+    stop("X cannot have missing or non-finite values.")
+  } 
+  
+  if(missing(N)){
+    N <- floor(sqrt(T)); #sqrt(T)
+    message(paste("Note: N set to ",N,".",sep=""));	
+  }else if(any(!is.finite(N))){
+    stop("N cannot be non-finite or missing.")
+  }else if(!(class(N) == 'numeric' && length(N)==1 && N%%1==0 && N>0)){
+    stop("N must be an integer greater than zero.")
+  }else if(N > nrow(X)){
+    stop("N must be smaller the number of timepoints of X.")
+  }else if(N < 30){
+    stop("N must be larger for good approximation using FFT within each partition segment.")
+  }
+  
+  if(missing(K)){
+    K <- floor(8*(T+(T/N))/T-1); #K such that number of Fourier frequencies x bandwidth = 4
+    message(paste("Note: K set to ",K,".",sep=""));		
+  }else if(any(!is.finite(K))){
+    stop("K cannot be non-finite or missing.")
+  }else if(!(class(K) == 'numeric' && length(K)==1 && K%%1==0 && K>0)){
+    stop("K must be an integer greater than zero.");
+  }else if(K >= floor(N/4 - 1)){
+    stop("K should be smaller for good frequency resolution.")
+  }
+  
+  
   freq <- seq(from=0,by=1/N,length.out=floor(N/2)+1);
   R<-min(ncol(X),Rsel);
 
