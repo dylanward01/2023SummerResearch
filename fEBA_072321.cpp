@@ -511,9 +511,3 @@ Rcpp::List fEBA(arma::cx_cube fhat, arma::cx_cube ghat,
 }
 
 
-
-/*** R
-# testqts <- Qtsfn(sim.tmp[[i]][[1]]$ghat[50:151,,])
-# testqint <- Qintfn(testqts);
-# plot(rownames(sim.tmp[[i]][[1]]$fhat)[51:151],testqint,type='l')
-*/

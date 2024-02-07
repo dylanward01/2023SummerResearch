@@ -35,14 +35,14 @@ ui <- fluidPage(
   tags$hr(),
   sidebarLayout(
     sidebarPanel(
-      conditionalPanel(condition = "input.tabselected==1",
+      conditionalPanel(condition = "input.tabselected==2",
                        radioButtons("type", "Time Series Type", # Selects the type of Simulated Data to look at
                                     choices=c("Univariate","Multivariate", "Functional"), 
                                     selected="Univariate"), 
                        
                        # Inputs for Simulated, Univariate Data
                        conditionalPanel(condition = "input.type == 'Univariate'", 
-                       selectInput("Simsetting", "Simulation Setting", # Selects the type of Univariate Data to look at
+                       selectInput("Simsetting", "Simulated Example", # Selects the type of Univariate Data to look at
                                    c("White Noise" = "W",
                                      "Linear" = "L",
                                      "Sinusoidal" = "S"), selected="S"),
@@ -117,14 +117,15 @@ ui <- fluidPage(
                       htmlOutput("Check111")
                       )),
       
-      conditionalPanel(condition = "input.tabselected==2",
+      conditionalPanel(condition = "input.tabselected==1",
+                       htmlOutput("Numeric_File"),
                        fileInput("file_csv", "Choose CSV File",
                                  multiple = TRUE,
                                  accept = c("text/csv",
                                             "text/comma-separated-values,text/plain",
                                             ".csv")),
                        checkboxInput("header", "Header", TRUE),
-                       
+                       htmlOutput("Warnings"), 
                        htmlOutput("UniVarDis"),
                        htmlOutput("NotUniVar"),
                        htmlOutput("BlankSpace"),
@@ -200,9 +201,9 @@ ui <- fluidPage(
     ),
     mainPanel(
       tabsetPanel(type = "tabs", id = 'tabselected', selected = 1,
-                  tabPanel("Simulation Setting", value = 1),
-                  tabPanel("File Upload", value = 2)), # Conditionally displays either the Simulated or File Upload sides of the app
-      conditionalPanel(condition = "input.tabselected==1", # This corresponds to the Simulated Side of the app
+                  tabPanel("File Upload", value = 1),
+                  tabPanel("Simulation Setting", value=2)), # Conditionally displays either the Simulated or File Upload sides of the app
+      conditionalPanel(condition = "input.tabselected==2", # This corresponds to the Simulated Side of the app
                        
                        # Outputs for Simulated, Univariate Data
                        conditionalPanel(condition = "input.type == 'Univariate'",
@@ -328,7 +329,7 @@ ui <- fluidPage(
                        br(),
                        br(),
       )),
-      conditionalPanel(condition = "input.tabselected==2", # This corresponds to the File Upload side of the app
+      conditionalPanel(condition = "input.tabselected==1", # This corresponds to the File Upload side of the app
                        
                        # Outputs for Observed, Univariate Data
                        plotOutput("Image_Plota", height=400, width=1000), # Plots data
@@ -461,7 +462,6 @@ server <- function(input,output, session) {
   output$BlankSpace <- renderText({
     paste("\n")
   })
-  
   # Ensures that Rsel will never be greater than R in the Simulated, Functional portion
   observe({
     RF1 <- as.numeric(input$RF1)
@@ -1321,18 +1321,7 @@ server <- function(input,output, session) {
   ## Event Reactive Block End point for the Simulated 
   ## Multivariate algorithm
   #######################################################
-  test_reactive <- eventReactive(input$goF1, ignoreNULL=TRUE, {
-    i = 1
-    check="check"
-    while(i <= 60){
-      print(i)
-      shinyjs::html(id = 'text',  paste("This is ", i, sep=""))
-      date_time<-Sys.time()
-      while((as.numeric(Sys.time()) - as.numeric(date_time))<1){} #dummy while loop
-      i = i + 1
-    }
-    list(check = check)
-  })
+  
   
   #######################################################
   ## Event Reactive Block Start point for the Simulated 
@@ -2214,6 +2203,49 @@ server <- function(input,output, session) {
       } else {
         names = T
       }
+      
+      #######################################################
+      ## Start - Display possible warnings, if uploaded data
+      ## isn't the correct type
+      #######################################################
+      if(!input$header){
+        row <- dataf[1,]
+        if(!(sum(!is.na(as.numeric(as.matrix(dataf[-1,])))) == length(as.matrix(dataf[-1,])))){
+          show("Numeric_File")
+          output$Numeric_File <- renderText({
+            paste(h3("X must contain only numeric values. Please upload a different dataset."), br()) 
+          })
+          
+        } else {
+          show("Numeric_File")
+          output$Numeric_File <- renderText({
+            paste(h3("The first row in your data is the only row that isn't numeric. Did you mean to check the box for the header?"), br())
+          })
+        }
+      } else if(names){
+        if(!(sum(!is.na(as.numeric(as.matrix(dataf[-1,])))) == length(as.matrix(dataf[-1,])))){
+          show("Numeric_File")
+          output$Numeric_File <- renderText({
+            paste(h3("X must contain only numeric values. Please upload a different dataset."), br())
+          })
+        } else {
+          hide("Numeric_File")
+        }
+      } else {
+        if(!(sum(!is.na(as.numeric(as.matrix(dataf)))) == length(as.matrix(dataf)))){
+          show("Numeric_File")
+          output$Numeric_File <- renderText({
+            paste(h3("X must contain only numeric values. Please upload a different dataset."), br())
+          })
+        } else {
+          hide("Numeric_File")
+        }
+      }
+      #######################################################
+      ## End - Display possible warnings, if uploaded data
+      ## isn't the correct type
+      #######################################################
+      
       output$FxnPlotaDesc_AA <- renderText({
         paste(h4("Currently viewing timepoint "))
       })
@@ -2379,6 +2411,7 @@ server <- function(input,output, session) {
       hide("Tapers_Fxna")
       hide("Ts_Fxn_Dim")
       hide("Rsel_Fxna")
+      hide("Warnings")
       hide("Fxn_AA")
       hide("Fxn_BB")
       hide("Fxn_CC")
@@ -2475,12 +2508,16 @@ server <- function(input,output, session) {
       show("TF_Fxna")
       show("go_Fxna")
       show("Ts_Fxn_Dim")
-      
+      show("Warnings")
+      output$Warnings <- renderText({
+        paste(h5(strong("NOTE: Selecting Values for N and K that are outside the range of the valid choices outlined below will crash the application")))
+      })
       show("Fxn_AA")
       output$Fxn_AA <- renderText({
-        paste(h6("*Valid choices range from 30 to ", dim(plot.listbb()[[1]])[1] / 2, "as we need to satisfy 30", HTML("&le;"), 
-                 "N", HTML("&le;"), "T / 2"))
+        paste(h6("*Valid choices range from 30 to ", dim(plot.listbb()[[1]])[1] , "as we need to satisfy 30", HTML("&le;"), 
+                 "N", HTML("&le;"), "T"))
       })
+      updateNumericInput(session, "Num_Fxna", min=30, max=dim(plot.listbb()[[1]])[1])
       show("Fxn_BB")
       output$Fxn_BB <- renderText({
         paste(h6("**Valid choices range from 1 to ", floor(sqrt(dim(plot.listbb()[[1]])[1]) / 4 - 1) - 1, "as we need to satisfy 1", HTML("&le;"), 
@@ -2488,7 +2525,7 @@ server <- function(input,output, session) {
       })
       output$Fxn_DD <- renderText({
         paste(h6("For more explanation of the above terms, and
-             the algorithm that is run, consult  'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
+             the algorithm that is run, consult 'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
       })
       show("Fxn_DD")
       show("Fxn_CC")
@@ -2503,6 +2540,7 @@ server <- function(input,output, session) {
         paste(h6("For more explanation of the above terms, and
              the algorithm that is run, consult 'Frequency Band Analysis of Nonstationary Multivariate Time Series' by Raanju R. Sundararajan and Scott A. Bruce (2023)"))
       })
+      hide("Warnings")
       show("Mv_AA")
       hide("Plot3D_File")
       hide("Num_Fxna")
@@ -2568,7 +2606,8 @@ server <- function(input,output, session) {
       ## Start - Get Initial Values for parameters in Univariate 
       ## algorithm, based on uploaded data
       #######################################################
-    updateNumericInput(session, "Num2", value=floor(sqrt(length(dataf))))
+    updateNumericInput(session, "Num2", value=0)
+    updateNumericInput(session, "Num2", value=floor(sqrt(length(dataf))), min=30, max=floor(length(dataf)/2))
     updateNumericInput(session, "Tapers2", value=floor(0.15 * sqrt(length(dataf))))
     output$res9 <- renderText({
         paste(h6("*Valid choices range from 30 to ", floor(length(dataf)/2), "as we need to satisfy 30", HTML("&le;"), 
@@ -2622,6 +2661,8 @@ server <- function(input,output, session) {
                  "/", HTML(paste(tags$sub(2))), " - 1> floor((K+1)(", HTML(paste(tags$sup("N"))), 
                  "/", HTML(paste(tags$sub("N+1"))), "))"))
       })
+      updateNumericInput(session, "Tapers2", min=1, max=i-1)
+      
       output$res11 <- renderText({
         paste(h6("For more explanation of the above terms, and the algorithm that is run, consult 'Empirical Frequency Band Analysis of Nonstationary Time Series' by Bruce, Tang, Hall, and Krafty (2019)"))
       })
@@ -2646,6 +2687,7 @@ server <- function(input,output, session) {
       paste(h6("**Valid choices range from 1 to ", floor((curr_num/ 4 - 1)) - 1 , "as we need to satisfy 1", HTML("&le;"), 
                "K < floor(N/4 - 1)"))
     })
+    updateNumericInput(session, "Tapers_Fxna", min=1, max=floor((curr_num/ 4 - 1)) - 1)
   })
   
   #######################################################
@@ -3269,6 +3311,20 @@ server <- function(input,output, session) {
     ## Start - Run the algorithm
     #################################################
     Rsel=as.numeric(input$Rsel_Fxna); #number of points in functional domain used for test statistics
+    set.seed(47)
+    ndraw=100000; #number of draws from Gaussian process for approximating p-values
+    blockdiag=TRUE; #use block diagonal covariance matrix approximation
+    dcap=40; #max number of frequencies tested in a given pass 
+    alpha=as.numeric(input$Signi_Fxna)/ceiling((1-2*bw/0.5)*(floor(N/2)+1)/dcap); #alpha with Bonferroni correction
+    shinyjs::html(id='ObsFxn_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'obs-fEBA.txt', in the directory this
+                      application is located in. Rerunning the algorithm for Observed, Functional data will overwrite
+                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
+                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
+    show("ObsFxn_text")
+    sink("obs-fEBA.txt")
+    res <- fEBA.wrapper(dataf,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap);
+    sink()
+    
     pse=fhat(dataf,N,K,Rsel,std);
     cmpnt="1-1"; #select component to view
     dimnames(pse) <- list(freq,apply(expand.grid(1:Rsel,1:Rsel),1,paste,collapse = "-"),1:B);
@@ -3303,19 +3359,6 @@ server <- function(input,output, session) {
     ## Spectrum Estimate
     #################################################
     
-    set.seed(47)
-    ndraw=100000; #number of draws from Gaussian process for approximating p-values
-    blockdiag=TRUE; #use block diagonal covariance matrix approximation
-    dcap=40; #max number of frequencies tested in a given pass 
-    alpha=as.numeric(input$Signi_Fxna)/ceiling((1-2*bw/0.5)*(floor(N/2)+1)/dcap); #alpha with Bonferroni correction
-    shinyjs::html(id='ObsFxn_text', html = "<h4> <strong> You can check the progress of the algorithm in the file 'obs-fEBA.txt', in the directory this
-                      application is located in. Rerunning the algorithm for Observed, Functional data will overwrite
-                      the contents of the file, and closing the application will delete the file. If you wish to preserve the file, you can
-                      change its name, to ensure it won't be overwritten or deleted.<strong> <h4>")
-    show("ObsFxn_text")
-    sink("obs-fEBA.txt")
-    res <- fEBA.wrapper(dataf,Rsel,K,N,ndraw,alpha,std,blockdiag,dcap);
-    sink()
     ##View test statistics and p-values over frequencies
     tmp=cbind(as.numeric(unlist(lapply(res$log, function(x) rownames(x$Qint)))),
               unlist(lapply(res$log, function(x) x$Qint)),
