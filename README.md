@@ -25,8 +25,8 @@
 
 If one wants to use this application, but doesn't want to utilize R, they can run this application through Docker. There are 2 methods that the user could embark upon, to run the application this way:
 - Firstly, they could use Dockerhub- as an image for this application is currently located at https://hub.docker.com/r/dylanward01/frequencybandanalysis. This method requires nothing to be downloaded from this repository, and only for docker to be installed and running on your machine. In order for the user to actually run the application from this, they would:
-    - Open their command line, and run the command docker pull dylanward01/frequencybandanalysis:5410
-    - After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:5410 (or replacing the 3838:3838 with whatever port you wish to run this application through).
+    - Open their command line, and run the command docker pull dylanward01/frequencybandanalysis:1111
+    - After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:1111 (or replacing the 3838:3838 with whatever port you wish to run this application through).
     - Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
 - Secondly, they could create the docker container for this application themselves. This method requires both the contents of this repository to be downloaded, as well as for Docker to be installed and running on your machine. To do this, the user would:
     -  Open up their command line, and set the working directory to be the folder containing both the Dockerfile, and the subfolder entitled FrequencyBandAnalysis (ie, the folder you got from properly downloading this repository).
