@@ -24,10 +24,11 @@ Rcpp::sourceCpp("mEBA_CPPfunctions.cpp")
 
 # Set up Layout for Application
 ui <- fluidPage(
+  #theme = bslib::bs_theme(bootswatch = "pulse"),
   useShinyjs(),
   tags$h1("Empirical Frequency Band Analysis"),
-  tags$a(tags$strong(tags$em("Source: Empirical Frequency Band Analysis of Nonstationary Time Series")), 
-         href = "https://www.tandfonline.com/doi/full/10.1080/01621459.2019.1671199"),
+  #tags$a(tags$strong(tags$em("Source: Empirical Frequency Band Analysis of Nonstationary Time Series")), 
+  #       href = "https://www.tandfonline.com/doi/full/10.1080/01621459.2019.1671199"),
   tags$p(tags$em("Research reported in this publication was supported by the National Institute of General Medical Sciences 
          of the National Institutes of Health under Award Number R01GM140476. The content is solely the responsibility
          of the authors and does not necessarily represent the official views of the National Institutes of Health")),
@@ -215,7 +216,7 @@ ui <- fluidPage(
                          plotOutput("summ_pval_uni", height = 500) # Scatterplot of p-values for partition testing
                          )
                        ),
-                       downloadButton('downloadData','Download the Above Results') , # Downloads the plots seen into a pdf
+                       hidden(downloadButton('downloadData','Download the Above Results')) , # Downloads the plots seen into a pdf
                        br(),
                        br(),
                        ),
@@ -340,7 +341,7 @@ ui <- fluidPage(
                          plotOutput("summ_pval_uni_file", height = 500, width = 500) # Scatterplot of p-values for partition testing
                          )
                        ),
-                       downloadButton('downloadData1','Download the Above Results'), # Downloads the plots seen into a pdf
+                       hidden(downloadButton('downloadData1','Download the Above Results')), # Downloads the plots seen into a pdf
                        br(),
                        br(),
                        
@@ -458,7 +459,6 @@ ui <- fluidPage(
 
 # This houses all of the code that will produce the above plots and results 
 server <- function(input,output, session) {
-  
   output$BlankSpace <- renderText({
     paste("\n")
   })
@@ -1967,6 +1967,7 @@ server <- function(input,output, session) {
   #######################################################
   
   plot.list <- eventReactive(input$go, ignoreNULL = FALSE, {
+    hide('downloadData')
     set.seed(823819)
     X = eba.simdata(T=as.numeric(input$Time))
     
@@ -2024,6 +2025,7 @@ server <- function(input,output, session) {
       ## End - Algorithm Execution if Data is Sinusoidal
       ################################################
     }
+    show('downloadData')
     dat_type <- as.character(input$Simsetting)
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
          plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
@@ -2851,6 +2853,7 @@ server <- function(input,output, session) {
   #######################################################
   
   plot.list2 <- eventReactive(input$go2, ignoreNULL = FALSE, {
+    hide('downloadData1')
     file <- input$file_csv
     ext <- tools::file_ext(file$datapath)
     req(file)
@@ -2867,6 +2870,7 @@ server <- function(input,output, session) {
     plot.log <- ebaoutfu$log
     plot.pvals <- ebaoutfu$pvals
     plot.flat <- ebaoutfu$flat
+    show('downloadData1')
     list(plot.x = plot.x, plot.y = plot.y, plot.z = plot.z, 
          plot.main = plot.main, plot.h = plot.h, plot.data = plot.data, 
          plot.log = plot.log, plot.pvals = plot.pvals, plot.flat = plot.flat)})
