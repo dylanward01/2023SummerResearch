@@ -1,6 +1,6 @@
 ## Repository Contents
 
-- Above, 2 things can be seen: A Dockerfile, and a folder entitled FrequencyBandAnalysis.
+- 2 other things (aside from this README file) can be seen in this repository: A Dockerfile, and a folder entitled FrequencyBandAnalysis.
   - The Dockerfile is given to enable the user to create their own version of their own version of a docker container for this application. It is not needed to run the application through R, and is only needed if the user wishes to implement Docker. 
   - Within the folder FrequencyBandAnalysis one can see:
   -   The file app.R, which contains the code for actually running the shiny application.
