@@ -1,8 +1,8 @@
 ## Repository Contents
 
-- 2 other things (aside from this README file) can be seen in this repository: A folder entitled Dockerfiles, and a folder entitled FrequencyBandAnalysis.
-  - The Dockerfiles folder is given just for transparancy's sake. It includes 2 dockerfiles- one utilized to build this repository as a docker image on a PC, and one utilized to build this repository as a docker image on a Mac. 
-  - Within the folder FrequencyBandAnalysis one can see:
+2 other things (aside from this README file) can be seen in this repository: A folder entitled Dockerfiles, and a folder entitled FrequencyBandAnalysis.
+- The Dockerfiles folder is given just for transparancy's sake. It includes 2 dockerfiles- one utilized to build this repository as a docker image on a PC, and one utilized to build this repository as a docker image on a Mac. 
+- Within the folder FrequencyBandAnalysis one can see:
   -   The file app.R, which contains the code for actually running the shiny application.
   -   The 3 other R files (all with functions in their names), and the 2 cpp files- all of which contain the actual functions and codes for the algorithms that are run.
   -   A folder entitled "Papers", which currently contains only the paper corresponding to the Univariate algorithm. Despite that, the doi's that correspond to each of the 3 manuscripts that gave the framework for the algorithms in this application can be seen both in the application, and below in this ReadMe.
@@ -10,9 +10,9 @@
 
 ## Running the Application in R
 
-1.) Download the FrequencyBandAnalysis folder seen above- containing a file named app.R, 3 files containing functions in R, and 2 files containing functions in C++, among other things. Notably, the Dockerfile is not needed if you are going to run the app exclusively through R.
-2.) Ensure that the packages listed in the app.R file are installed on your machine
-3.) Proceed to run the app.R file, and wait for the application to open in a new window from your R interface.
+1. Download the FrequencyBandAnalysis folder seen above- containing a file named app.R, 3 files containing functions in R, and 2 files containing functions in C++, among other things. Notably, the Dockerfile is not needed if you are going to run the app exclusively through R.
+2. Ensure that the packages listed in the app.R file are installed on your machine
+3. Proceed to run the app.R file, and wait for the application to open in a new window from your R interface.
 
 ## Within the Application
 
@@ -24,9 +24,9 @@
 ## Docker
 
 If one wants to use this application, but doesn't want to utilize R, they can run this application through Docker. Namely, Dockerhub serves to provide a repository where updated images for this application are located, as an image for this application is currently located at https://hub.docker.com/r/dylanward01/frequencybandanalysis. This method requires nothing to be downloaded from this repository, and only for docker to be installed and running on your machine. In order for the user to actually run the application from this, they would:
-    - Open their command line, and run the command docker pull dylanward01/frequencybandanalysis:1111
-    - After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:1111 (or replacing the 3838:3838 with whatever port you wish to run this application through).
-    - Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
+- Open their command line, and run the command docker pull dylanward01/frequencybandanalysis:1111
+- After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:1111 (or replacing the 3838:3838 with whatever port you wish to run this application through).
+- Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
 
 ## Citations
 
