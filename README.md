@@ -5,7 +5,6 @@
 - Within the folder FrequencyBandAnalysis one can see:
   -   The file app.R, which contains the code for actually running the shiny application.
   -   The 3 other R files (all with functions in their names), and the 2 cpp files- all of which contain the actual functions and codes for the algorithms that are run.
-  -   A folder entitled "Papers", which currently contains only the paper corresponding to the Univariate algorithm. Despite that, the doi's that correspond to each of the 3 manuscripts that gave the framework for the algorithms in this application can be seen both in the application, and below in this ReadMe.
   -   A folder entitled "Sample Data" which contains simulated data for each of the 3 types of data that this application works on. This folder is not required to be present for the application to run- it is simply there to give the user some sample data to explore the application, and the outputs that it gives.
 
 ## Running the Application in R
