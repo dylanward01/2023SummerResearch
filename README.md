@@ -1,11 +1,11 @@
 ## Repository Contents
 
-- 2 other things (aside from this README file) can be seen in this repository: A Dockerfile, and a folder entitled FrequencyBandAnalysis.
-  - The Dockerfile is given to enable the user to create their own version of their own version of a docker container for this application. It is not needed to run the application through R, and is only needed if the user wishes to implement Docker. 
+- 2 other things (aside from this README file) can be seen in this repository: A folder entitled Dockerfiles, and a folder entitled FrequencyBandAnalysis.
+  - The Dockerfiles folder is given just for transparancy's sake. It includes 2 dockerfiles- one utilized to build this repository as a docker image on a PC, and one utilized to build this repository as a docker image on a Mac. 
   - Within the folder FrequencyBandAnalysis one can see:
   -   The file app.R, which contains the code for actually running the shiny application.
   -   The 3 other R files (all with functions in their names), and the 2 cpp files- all of which contain the actual functions and codes for the algorithms that are run.
-  -   A folder entitled "Papers", which contains the 3 papers that establish the methodology on which this application runs. This folder is not required to be present for the application to run- it is simply there to give the user easier access to the references for the algorithms and code that are implemented throughout this application.
+  -   A folder entitled "Papers", which currently contains only the paper corresponding to the Univariate algorithm. Despite that, the doi's that correspond to each of the 3 manuscripts that gave the framework for the algorithms in this application can be seen both in the application, and below in this ReadMe.
   -   A folder entitled "Sample Data" which contains simulated data for each of the 3 types of data that this application works on. This folder is not required to be present for the application to run- it is simply there to give the user some sample data to explore the application, and the outputs that it gives.
 
 ## Running the Application in R
@@ -23,13 +23,14 @@
 
 ## Docker
 
-If one wants to use this application, but doesn't want to utilize R, they can run this application through Docker. There are 2 methods that the user could embark upon, to run the application this way:
-- Firstly, they could use Dockerhub- as an image for this application is currently located at https://hub.docker.com/r/dylanward01/frequencybandanalysis. This method requires nothing to be downloaded from this repository, and only for docker to be installed and running on your machine. In order for the user to actually run the application from this, they would:
+If one wants to use this application, but doesn't want to utilize R, they can run this application through Docker. Namely, Dockerhub serves to provide a repository where updated images for this application are located, as an image for this application is currently located at https://hub.docker.com/r/dylanward01/frequencybandanalysis. This method requires nothing to be downloaded from this repository, and only for docker to be installed and running on your machine. In order for the user to actually run the application from this, they would:
     - Open their command line, and run the command docker pull dylanward01/frequencybandanalysis:1111
     - After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:1111 (or replacing the 3838:3838 with whatever port you wish to run this application through).
     - Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
-- Secondly, they could create the docker container for this application themselves. This method requires both the contents of this repository to be downloaded, as well as for Docker to be installed and running on your machine. To do this, the user would:
-    -  Open up their command line, and set the working directory to be the folder containing both the Dockerfile, and the subfolder entitled FrequencyBandAnalysis (ie, the folder you got from properly downloading this repository).
-    -  In their command line, run the command docker build .
-    -  After that command finishes, run the command docker images, to see the image ID of the image that was just created, and then run docker run -d --rm -p 3838:3838 (Insert entire Image ID here).
-    -  Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838, and proceed to run through and enjoy the shiny application.
+
+## Citations
+
+Throughout this application, 3 different papers are mentioned and referred to. Their doi's, and the algorithm produced in each of those papers is mentioned below:
+- (Univariate): doi.org/10.1080/01621459.2019.1671199
+- (Multivariate): doi.org/10.48550/arXiv.2301.03664
+- (Functional): doi.org/10.48550/arXiv.2102.01784
