@@ -632,7 +632,7 @@ server <- function(input,output, session) {
                                      "/", HTML(paste(tags$sub("N+1"))), "))"))))
   })
   output$Res2 <- renderText({
-    paste(h6("For more explanation of the above terms, and the algorithm that is run, consult 'Empirical Frequency Band Analysis of Nonstationary Time Series' by Bruce, Tang, Hall, and Krafty (2019)"))
+    paste(h6("For more explanation of the above terms, and the algorithm that is run, consult:",HTML("<br>"),"Scott A. Bruce, Cheng Yong Tang, Martica H. Hall & Robert T. Krafty (2020) Empirical Frequency Band Analysis of Nonstationary Time Series, Journal of the American Statistical Association, 115:532, 1933-1945,", HTML(paste(tags$a("doi.org/10.1080/01621459.2019.1671199", href = "https://doi.org/10.1080/01621459.2019.1671199")))))
   })
   output$F1_1 <- renderText({
     paste(h6("*Choices are T", HTML(paste(tags$sup("1/2"))), ", T", HTML(paste(tags$sup("2/3"))),
@@ -647,11 +647,11 @@ server <- function(input,output, session) {
   })
   output$F1_4 <- renderText({
     paste(h6("For more explanation of the above terms, and
-             the algorithm that is run, consult  'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
+             the algorithm that is run, consult:",HTML("<br>"), "Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning by Bruce and Bagchi (2020+)", HTML(paste(tags$a("doi.org/10.48550/arXiv.2102.01784", ref="https://doi.org/10.48550/arXiv.2102.01784")))))
   })
   output$Check111 <- renderText({
     paste(h6("For more explanation of the above terms, and
-             the algorithm that is run, consult 'Frequency Band Analysis of Nonstationary Multivariate Time Series' by Raanju R. Sundararajan and Scott A. Bruce (2023)"))
+             the algorithm that is run, consult:",HTML("<br>"),"Frequency Band Analysis of Nonstationary Multivariate Time Series by Raanju R. Sundararajan and Scott A. Bruce (2023)", HTML(paste(tags$a("doi.org/10.48550/arXiv.2301.03664", href="https://doi.org/10.48550/arXiv.2301.03664")))))
   })
   output$res9 <- renderText({
     paste("*Please enter a dataframe")
@@ -2578,7 +2578,7 @@ server <- function(input,output, session) {
       })
       output$Fxn_DD <- renderText({
         paste(h6("For more explanation of the above terms, and
-             the algorithm that is run, consult 'Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning' by Bruce and Bagchi (2020+)"))
+             the algorithm that is run, consult:",HTML("<br>"), "Efficient Algorithm for Frequency-Domain Dimension Reduction of Functional Time Series via Adaptive Frequency Band Learning by Bruce and Bagchi (2020+)", HTML(paste(tags$a("doi.org/10.48550/arXiv.2102.01784", ref="https://doi.org/10.48550/arXiv.2102.01784")))))
       })
       show("Fxn_DD")
       show("Fxn_CC")
@@ -2591,7 +2591,7 @@ server <- function(input,output, session) {
     } else {
       output$Mv_AA <- renderText({
         paste(h6("For more explanation of the above terms, and
-             the algorithm that is run, consult 'Frequency Band Analysis of Nonstationary Multivariate Time Series' by Raanju R. Sundararajan and Scott A. Bruce (2023)"))
+             the algorithm that is run, consult:", HTML("<br>"),"Frequency Band Analysis of Nonstationary Multivariate Time Series by Raanju R. Sundararajan and Scott A. Bruce (2023)", HTML(paste(tags$a("doi.org/10.48550/arXiv.2301.03664", href="https://doi.org/10.48550/arXiv.2301.03664")))))
       })
       hide("Warnings")
       show("Mv_AA")
@@ -2725,7 +2725,7 @@ server <- function(input,output, session) {
       updateNumericInput(session, "Tapers2", min=1, max=i-1)
       
       output$res11 <- renderText({
-        paste(h6("For more explanation of the above terms, and the algorithm that is run, consult 'Empirical Frequency Band Analysis of Nonstationary Time Series' by Bruce, Tang, Hall, and Krafty (2019)"))
+        paste(h6("For more explanation of the above terms, and the algorithm that is run, consult:",HTML("<br>"),"Scott A. Bruce, Cheng Yong Tang, Martica H. Hall & Robert T. Krafty (2020) Empirical Frequency Band Analysis of Nonstationary Time Series, Journal of the American Statistical Association, 115:532, 1933-1945,", HTML(paste(tags$a("doi.org/10.1080/01621459.2019.1671199", href = "https://doi.org/10.1080/01621459.2019.1671199")))))
       })
     } 
     }
