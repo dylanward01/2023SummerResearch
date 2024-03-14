@@ -1,0 +1,51 @@
+# Base image https://hub.docker.com/r/almalinux/arm64v8
+FROM almalinux/arm64v8
+#FROM r-base:latest
+
+RUN dnf install -yv https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+RUN dnf config-manager --set-enabled powertools && \
+    dnf install -yv openblas-devel && \
+    dnf install -yv R
+
+RUN dnf install -y \
+    libcurl-devel \
+    libxml2-devel \
+    openssl-devel \
+    harfbuzz-devel \
+    freetype-devel \
+    fribidi-devel \
+    libgit2-devel \
+    libtiff-devel \
+    libjpeg-turbo-devel && \
+    dnf clean all
+
+RUN R -e "install.packages(c('usethis', 'pkgdown', 'rcmdcheck', 'roxygen2', 'rversions', 'urlchecker', 'gargle', 'httr', 'foghorn', 'xml2', 'rvest', 'lintr', 'gh', 'covr', 'curl', 'openssl', 'httr2', 'ragg', 'whoami'), repos='https://cloud.r-project.org/', dependencies=TRUE, verbose=TRUE);"
+
+RUN R -e "install.packages('BiocManager', repos='https://cloud.r-project.org/', dependencies=TRUE, verbose=TRUE);" &&     R -e "BiocManager::install('devtools', dependencies=TRUE, verbose=TRUE)" &&     R -e "library(devtools);"
+
+
+RUN R -e "library(grid);"
+RUN R -e "library(devtools); install_version('shiny', version = '1.7.4.1', dependencies = TRUE, repos='https://cloud.r-project.org/', verbose=TRUE);"
+RUN R -e "library(devtools); install_version('momentchi2', version = '0.1.5', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('fields', version = '14.1', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('viridis', version = '0.6.4', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('signal', version = '0.7-7', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('fossil', version = '0.4.0', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('cowplot', version = '1.1.1', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('gridBase', version = '0.4-7', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('gridExtra', version = '2.3', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('ggplot2', version = '3.4.2', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('RcppArmadillo', version = '0.12.6.1.0', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('shinyjs', version = '2.1.0', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('fda', version = '6.1.4', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+RUN R -e "library(devtools); install_version('plotly', version = '4.10.2', dependencies = TRUE, repos='https://cloud.r-project.org/');"
+
+# Copy application files
+COPY /-Empirical-Frequency-Band-Analysis-main ./app
+
+# Expose port
+EXPOSE 3838
+
+# Run app on container start
+CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 3838)"]
