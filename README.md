@@ -1,6 +1,4 @@
 ## Repository Contents
-
-2 other things (aside from this README file) can be seen in this repository: A folder entitled Dockerfiles, and a folder entitled FrequencyBandAnalysis.
 - The Dockerfiles folder is given just for transparancy's sake. It includes 2 dockerfiles- one utilized to build this repository as a docker image on a PC, and one utilized to build this repository as a docker image on a Mac. 
 - Within the folder FrequencyBandAnalysis one can see:
   -   The file app.R, which contains the code for actually running the shiny application.
