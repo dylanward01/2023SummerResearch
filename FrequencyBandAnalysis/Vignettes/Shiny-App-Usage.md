@@ -5,9 +5,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 This vignette serves to give a detailed explanation of how to use and interpret this shiny application.
 
