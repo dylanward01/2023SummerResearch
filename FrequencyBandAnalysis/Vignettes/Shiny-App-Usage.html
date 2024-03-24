@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Shiny App Usage</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Shiny App Usage</h1>
+
+
+
+<p>This vignette serves to give a detailed explanation of how to use and
+interpret this shiny application.</p>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Upon opening the application, the user will see two tabs at the top
+of the screen- entitled “File Upload” and “Simulation Setting”. These
+serve to enable the user to run these algorithms on either data that
+they upload, or on some simulated data, respectively. As such, this
+vignette will give a step-by-step guide on how to utilize both tabs of
+this application. This vignette is broken up into 2 sections (File
+Upload and Simulation Setting)- each of which has 2 subsections (Input
+and Output). Each of these sections serve to give a detailed explanation
+of either what needs to go into the application for the algorithm to
+run, or a detailed summary of the visual results that will be given
+after the algorithm runs. As such, the two input and output sections
+will be very similar to one another (but not identical- hence why they
+will all given below, in the sake of clarity).</p>
+</div>
+<div id="file-upload" class="section level1">
+<h1>File Upload</h1>
+<div id="file-upload--input" class="section level2">
+<h2>File Upload- Input</h2>
+<ol style="list-style-type: decimal">
+<li>The first step is to upload your data, which must be a CSV file.
+Pressing the “Browse” button will open a file explorer that will enable
+you to select your data, and upload it into the application.</li>
+</ol>
+<ul>
+<li>If your data has column names, they will be kept and read in, so
+long as you check the box next to Header prior to selecting your
+data</li>
+<li>The data must be entirely numeric for the algorithm to run properly.
+A corresponding warning message will appear if the data that is read in
+isn’t numeric.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li><p>If your data has multiple components, you will be prompted to
+select whether your data is Multivariate or Functional. If your uploaded
+data is Univariate, predictably, you won’t see this prompt.</p></li>
+<li><p>Now, the dimensions of your data will appear below where you
+inputted the data. Additionally, for Multivariate/Functional data, there
+will be a selection for whether or not you want to include 3D Plots in
+the output. Next, you should choose values for each of the parameters
+that you see. These will all be filled with a default value that will
+work, however you can change each of these values to any number of valid
+choices</p></li>
+</ol>
+<ul>
+<li>“Valid Choices” are denoted by “*’s”, and explained as a footnote.
+This serves to give the absolute range of values that can be utilized,
+that will still let the algorithm run. Choosing a value that is outside
+of this range will either cause an error, or crash the application.</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>Once you are finished selecting values for the options seen, you can
+press the “Run” button, which will run the algorithm on your data, with
+the selected values as parameters.</li>
+</ol>
+</div>
+<div id="file-upload--output" class="section level2">
+<h2>File Upload- Output</h2>
+<p>Note: For Functional/Multivariate data, while the algorithm is
+running, a message will appear to tell you that you can track the
+progress of the algorithm in a newly-created text file.</p>
+<ol style="list-style-type: decimal">
+<li><p>Once Step 2 in the File Upload- Input section above has been
+completed, a plot of your data will appear in the main portion of the
+application. For data with multiple components, there will be a slider
+to let you scroll through each component (for multivariate data), or
+through each timepoint (for functional data). All other plots will only
+appear after the algorithm has finished running.</p></li>
+<li><p>The next plot will differ slightly depending on what type of data
+is being used</p></li>
+</ol>
+<ul>
+<li>For Univariate data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies This is accompanied
+with a table, denoting each of the predicted frequency bands.</li>
+<li>For Multivariate data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies This is accompanied
+with a table, denoting each of the predicted frequency bands.
+Additionally, there is a slider below the plot to let you view this for
+every “diagonal” cross-component (such as 1-1, 2-2, etc.).</li>
+<li>For Functional data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies This is accompanied
+with a table, denoting each of the predicted frequency bands.
+Additionally, there is a slider below the plot to let you view this for
+every cross-component. If a “diagonal” cross-component is selected (such
+as 1-1, 2-2, etc.), this plot will be the multitaper autospectrogram for
+that component. If a “non-diagonal” cross-component is selected (such as
+1-2, 3-1, etc.), this plot will be the signal coherence between those
+two components.</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Next, there may or may not be 3D Plots- as this depends on the type
+of data that is being used. Additionally, these plots will not show if
+you chose to exclude these 3D Plots, in an earlier mentioned
+selection.</li>
+</ol>
+<ul>
+<li>For Univariate data, there will be no 3D Plots.</li>
+<li>For Multivariate data, there will be one 3D Plot. It will be a 3D
+version of the multitaper autospectrogram plot seen above, but this plot
+doesn’t have anything denoting the predicted significant partition
+points. However, there is still a slider, to enable viewing this plot
+for every “diagonal” cross-component.</li>
+<li>For Functional data, there will be two 3D Plots. The first plot will
+be a 3D Plot of the entire dataset. It can be seen as an amalgamation of
+the first plot in this selection at every timepoint. The second plot
+will be a 3D version of the multitaper autospectrogram/coherence plot
+seen above, but this plot doesn’t have anything denoting the predicted
+significant partition points. However, there is still a slider, to
+enable viewing this plot for every cross-component.</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>Lastly, summary tables and a scatterplot of p-values that can be
+seen.</li>
+</ol>
+<ul>
+<li>There is a table entitled “Summary of Partition Point Tests”- which
+contains the frequency, along with its corresponding p-value, p-value
+threshold, and whether or not it is a significant partition point for
+every frequency deemed significant. If there were no frequencies deemed
+to be significant partition points, then the table will display the
+frequency that had the lowest corresponding p-value.</li>
+<li>For Univariate data, there is a table entitled “Summary of testing
+for Flat Spectrum in Each Segment”. This table contains information on
+whether or not each predicted frequency band has a flat, or non-flat
+spectrum</li>
+<li>The scatterplot serves to plot the p-value for testing whether a
+given frequency is a significant partition point against the frequencies
+that were tested. If any frequencies were deemed to be a significant
+partition point, then a vertical dashed line will be present at that
+given frequency in the plot.</li>
+</ul>
+<ol start="5" style="list-style-type: decimal">
+<li>At the very bottom of the page, there is a button to “Download the
+Above Results”, which will download the plots and tables seen above into
+a 2-page pdf file. The first page will consist of plots 1 and 2, as they
+were mentioned in this section. (Note: For Multivariate/Functional data,
+whichever component/timepoint you have chosen with the slider when you
+press the Download button will be the component/timepoint that you will
+get a plot for in the pdf). The second page will consist of the plots
+and tables mentioned above in 4.</li>
+</ol>
+</div>
+</div>
+<div id="simulation-setting" class="section level1">
+<h1>Simulation Setting</h1>
+<div id="simulation-setting--input" class="section level2">
+<h2>Simulation Setting- Input</h2>
+<p>Note: Upon coming to this tab for the first time after opening the
+application, there will be some default parameters for Univariate Data
+selected, and the results of running that algorithm will be given.</p>
+<ol style="list-style-type: decimal">
+<li>The first step is to select the type of data that you want to use-
+either Univariate, Multivariate, or Functional. This choice will change
+the various parameters that can be seen below. Additionally, for
+Multivariate/Functional data, there will be a selection for whether or
+not you want to include 3D Plots in the output. After this, you should
+choose one of the options under the Simulation Setting drop down
+(Sinusoidal, Linear, etc.), as this will choose the type of simulated
+data that you want to run this algorithm on.</li>
+</ol>
+<ul>
+<li>If “White Noise” was chosen under the Simulation Setting, the data
+was generated such that it will have no actual partition points.</li>
+<li>If any other choice was selected under the Simulation Setting, the
+data was generated such that it will have partition points at
+frequencies of 0.15 Hz and 0.35 Hz.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Next, you should choose values for each of the parameters that you
+see. These will all be filled with a default value that will work,
+however you can change each of these values to a couple other valid,
+preset choices.</li>
+</ol>
+<ul>
+<li>“Valid Choices” are denoted by “*’s”, and explained as a footnote.
+This serves to give a couple values that can work in running the
+algorithm.</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Once you are finished selecting values for the options seen, you can
+press the “Run” button, which will run the algorithm on the chosen
+simulated data, with the selected values as parameters.</li>
+</ol>
+</div>
+<div id="simulation-setting--output" class="section level2">
+<h2>Simulation Setting- Output</h2>
+<p>Note: For Functional/Multivariate data, while the algorithm is
+running, a message will appear to tell you that you can track the
+progress of the algorithm in a newly-created text file.</p>
+<ol style="list-style-type: decimal">
+<li><p>The first plot that appears will simply be a plot of your data.
+For data with multiple components, there will be a slider to let you
+scroll through each component (for multivariate data), or through each
+timepoint (for functional data).</p></li>
+<li><p>The next plot will differ slightly depending on what type of data
+is being used.</p></li>
+</ol>
+<ul>
+<li>For Univariate data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies, and the actual
+partition points represented by a neon green line on the corresponding
+frequencies. This is accompanied with a table, denoting each of the
+predicted and actual frequency bands.</li>
+<li>For Multivariate data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies, and the actual
+partition points represented by a neon green line on the corresponding
+frequencies. This is accompanied with a table, denoting each of the
+predicted and actual frequency bands. Additionally, there is a slider
+below the plot to let you view this for every “diagonal” cross-component
+(such as 1-1, 2-2, etc.).</li>
+<li>For Functional data, this will be a plot of the multitaper
+autospectrogram, with the estimated partition points represented by a
+light blue line on the corresponding frequencies, and the actual
+partition points represented by a neon green line on the corresponding
+frequencies. This is accompanied with a table, denoting each of the
+predicted and actual frequency bands. Additionally, there is a slider
+below the plot to let you view this for every cross-component. If a
+“diagonal” cross-component is selected (such as 1-1, 2-2, etc.), this
+plot will be the multitaper autospectrogram for that component. If a
+“non-diagonal” cross-component is selected (such as 1-2, 3-1, etc.),
+this plot will be the signal coherence between those two
+components.</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Next, there may or may not be 3D Plots- as this depends on the type
+of data that is being used. Additionally, these plots will not show if
+you chose to exclude these 3D Plots, in an earlier mentioned
+selection.</li>
+</ol>
+<ul>
+<li>For Univariate data, there will be no 3D Plots.</li>
+<li>For Multivariate data, there will be one 3D Plot. It will be a 3D
+version of the multitaper autospectrogram plot seen above, but this plot
+doesn’t have anything denoting the actual or predicted significant
+partition points. However, there is still a slider, to enable viewing
+this plot for every “diagonal” cross-component.</li>
+<li>For Functional data, there will be two 3D Plots. The first plot will
+be a 3D Plot of the entire dataset. It can be seen as an amalgamation of
+the first plot in this selection at every timepoint. The second plot
+will be a 3D version of the multitaper autospectrogram/coherence plot
+seen above, but this plot doesn’t have anything denoting the actual or
+predicted significant partition points. However, there is still a
+slider, to enable viewing this plot for every cross-component.</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>Lastly, summary tables and a scatterplot of p-values that can be
+seen.</li>
+</ol>
+<ul>
+<li>There is a table entitled “Summary of Partition Point Tests”- which
+contains the frequency, along with its corresponding p-value, p-value
+threshold, and whether or not it is a significant partition point for
+every frequency deemed significant. If there were no frequencies deemed
+to be significant partition points, then the table will display the
+frequency that had the lowest corresponding p-value.</li>
+<li>For Univariate data, there is a table entitled “Summary of testing
+for Flat Spectrum in Each Segment”. This table contains information on
+whether or not each predicted frequency band has a flat, or non-flat
+spectrum</li>
+<li>The scatterplot serves to plot the p-value for testing whether a
+given frequency is a significant partition point against the frequencies
+that were tested. If any frequencies were deemed to be a significant
+partition point, then a vertical dashed line will be present at that
+given frequency in the plot.</li>
+</ul>
+<ol start="5" style="list-style-type: decimal">
+<li>At the very bottom of the page, there is a button to “Download the
+Above Results”, which will download the plots and tables seen above into
+a 2-page pdf file. The first page will consist of plots 1 and 2, as they
+were mentioned in this section. (Note: For Multivariate/Functional data,
+whichever component/timepoint you have chosen with the slider when you
+press the Download button will be the component/timepoint that you will
+get a plot for in the pdf). The second page will consist of the plots
+and tables mentioned above in 4.</li>
+</ol>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
