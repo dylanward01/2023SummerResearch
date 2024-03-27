@@ -1,4 +1,4 @@
-This application serves to provide a way to find and analyze frequency bands in Univariate, Multivariate, and Functional data.
+### This application serves to provide a way to find and analyze frequency bands in Univariate, Multivariate, and Functional data.
 
 ## Repository Contents
 - The Dockerfiles folder is given just for transparancy's sake. It includes 2 dockerfiles- one utilized to build this repository as a docker image on a PC, and one utilized to build this repository as a docker image on a Mac. 
