@@ -1,0 +1,26 @@
+---
+title: "Running the Shiny App"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Currently, there are 3 different ways that this application can be run (running it through R, utilizing our package, or running it through Docker). Below is a step-by-step guide for how to run this application through any of these methods. 
+
+# 1.) Running this application through R
+
+1. Download the FrequencyBandAnalysis folder seen in this repository.
+2. Ensure that the packages listed in the app.R file are installed on your machine.
+3. Proceed to run the app.R file, and wait for the application to open in a new window from your R interface.
+
+# 2.) Running this application through our package
+
+- The corresponding package for this application, and its associated functions is currently a work in progress. This will be updated once the package has been made.
+
+# 3.) Running this application through Docker
+
+1. Open your command line, and run the command docker pull dylanward01/frequencybandanalysis:0.9.1
+2. After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:0.9.1 (or replacing the 3838:3838 with whatever port you wish to run this application through).
+3. Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
