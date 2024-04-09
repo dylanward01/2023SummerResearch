@@ -10,7 +10,7 @@
 
 ## Running the Application 
 
-Currently, this application can be run either through R, or through Docker. An explanation on how to run this application via anyy of those means is explained in this [vignette](https://github.com/dylanward01/FrequencyBandAnalysis/blob/main/FrequencyBandAnalysis/Vignettes/Running-The-Shiny-App.pdf), that is seen in this repository
+Currently, this application can be run either through R, or through Docker. An explanation on how to run this application via any of those means is explained in this [vignette](https://github.com/dylanward01/FrequencyBandAnalysis/blob/main/FrequencyBandAnalysis/Vignettes/Running-The-Shiny-App.pdf), that is seen in this repository
 
 ## Within the Application
 
