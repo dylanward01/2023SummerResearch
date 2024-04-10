@@ -12,7 +12,11 @@ This vignette serves to give a detailed explanation of how to use and interpret 
 
 # Introduction
 
-Upon opening the application, the user will see two tabs at the top of the screen- entitled "File Upload" and "Simulation Setting". These serve to enable the user to run these algorithms on either data that they upload, or on some simulated data, respectively. As such, this vignette will give a step-by-step guide on how to utilize both tabs of this application. This vignette is broken up into 2 sections (File Upload and Simulation Setting)- each of which has 2 subsections (Input and Output). Each of these sections serve to give a detailed explanation of either what needs to go into the application for the algorithm to run, or a detailed summary of the visual results that will be given after the algorithm runs. As such, the two input and output sections will be very similar to one another (but not identical- hence why they will all given below, in the sake of clarity). If you're only interested in running a single section of this application (either the File Upload, or the Simulation Setting), you can simply skip to that part in this Vignette.
+```{r, echo=FALSE, fig.cap="Screenshot of Application upon Opening", out.width = '90%'}
+knitr::include_graphics("C:/Users/Dylan/Downloads/BlankShinyApp.png")
+```
+
+Upon opening the application, the user will see the above screenshot. As shown above, there are two tabs at the top of the screen- entitled "File Upload" and "Simulation Setting". These serve to enable the user to run these algorithms on either data that they upload, or on some simulated data, respectively. As such, this vignette will give a step-by-step guide on how to utilize both tabs of this application. This vignette is broken up into 2 sections (File Upload and Simulation Setting)- each of which has 2 subsections (Input and Output). Each of these sections serve to give a detailed explanation of either what needs to go into the application for the algorithm to run, or a detailed summary of the visual results that will be given after the algorithm runs. As such, the two input and output sections will be very similar to one another (but not identical- hence why they will all given below, in the sake of clarity). If you're only interested in running a single section of this application (either the File Upload, or the Simulation Setting), you can simply skip to that part in this Vignette.
 
 # File Upload
 
@@ -58,17 +62,22 @@ Note: For Functional/Multivariate data, while the algorithm is running, a messag
 
 -   There is a table entitled "Summary of Partition Point Tests"- which contains the frequency, along with its corresponding p-value, p-value threshold, and whether or not it is a significant partition point for every frequency deemed significant. If there were no frequencies deemed to be significant partition points, then the table will display the frequency that had the lowest corresponding p-value, and note that it was not a significant partition point. (Note: The algorithm for Functional Data is constructed such that it will test groups of frequencies at once, to see if they are significant partition points. As such, the results from each group's tests will be displayed in the summary tables- even if they are all not significant partition points.)
 
--   For Univariate data, there is also a table entitled "Summary of testing for Flat Spectrum in Each Segment". This table contains information on whether or not each predicted frequency band has a flat, or non-flat spectrum
+-   For Univariate data, there is also an additional table entitled "Summary of testing for Flat Spectrum in Each Segment". This table contains information on whether or not each predicted frequency band has a flat, or non-flat spectrum
 
 -   The scatterplot serves to plot the p-value for testing whether a given frequency is a significant partition point against the frequencies that were tested. If any frequencies were deemed to be a significant partition point, then a vertical dashed line will be present at that given frequency in the plot.
 
 5.  At the very bottom of the page, there is a button to "Download the Above Results", which will download the plots and tables seen above into a 2-page pdf file. The first page will consist of plots 1 and 2, as they were mentioned in this section. (Note: For Multivariate/Functional data, whichever component/timepoint you have chosen with the slider when you press the Download button will be the component/timepoint that you will get a plot for in the pdf). The second page will consist of the plots and tables mentioned above in 4.
 
+\newpage
+
 # Simulation Setting
 
-## Simulation Setting- Input
+![Screenshot of Simulation Setting side upon Opening](C:/Users/Dylan/Downloads/SimSettingDefault.png)
 
-Note: Upon coming to this tab for the first time after opening the application, there will be some default parameters for Univariate Data selected, and the results of running that algorithm will be given.
+Note: Upon coming to this tab for the first time after opening the application, the user will see the above screenshot. There will be some default parameters for Univariate Data selected, and the results of running that algorithm will be given.
+
+
+## Simulation Setting- Input
 
 1.  The first step is to select the type of data that you want to use- either Univariate, Multivariate, or Functional. This choice will change the various parameters that can be seen below. Additionally, for Multivariate/Functional data, there will be a selection for whether or not you want to include 3D Plots in the output. After this, you should choose one of the options under the Simulation Setting drop down (Sinusoidal, Linear, etc.), as this will choose the type of simulated data that you want to run this algorithm on.
 
@@ -108,7 +117,7 @@ Note: For Functional/Multivariate data, while the algorithm is running, a messag
 
 -   There is a table entitled "Summary of Partition Point Tests"- which contains the frequency, along with its corresponding p-value, p-value threshold, and whether or not it is a significant partition point for every frequency deemed significant. If there were no frequencies deemed to be significant partition points, then the table will display the frequency that had the lowest corresponding p-value, and note that it was not a significant partition point. (Note: The algorithm for Functional Data is constructed such that it will test groups of frequencies at once, to see if they are significant partition points. As such, the results from each group's tests will be displayed in the summary tables- even if they are all not significant partition points.)
 
--   For Univariate data, there is a table entitled "Summary of testing for Flat Spectrum in Each Segment". This table contains information on whether or not each predicted frequency band has a flat, or non-flat spectrum
+-   For Univariate data, there is an additional table entitled "Summary of testing for Flat Spectrum in Each Segment". This table contains information on whether or not each predicted frequency band has a flat, or non-flat spectrum
 
 -   The scatterplot serves to plot the p-value for testing whether a given frequency is a significant partition point against the frequencies that were tested. If any frequencies were deemed to be a significant partition point, then a vertical dashed line will be present at that given frequency in the plot.
 
