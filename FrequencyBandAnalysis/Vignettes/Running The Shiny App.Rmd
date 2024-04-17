@@ -11,9 +11,9 @@ Currently, there are 3 different ways that this application can be run (running 
 
 # 1.) Running this application through R
 
-1. Download the FrequencyBandAnalysis folder seen in this repository, and set that folder to be your working directory in R.
+1. Download the FrequencyBandAnalysis folder (which directly contains the app.R file) seen in this repository, and set that folder to be your working directory in R.
 2. Ensure that the packages listed in the app.R file are installed on your machine.
-3. Proceed to run the app.R file, and wait for the application to open in a new window from your R interface.
+3. Simply run the command runApp() in whatever R console you are using, and wait for the application to load in a new window.
 
 # 2.) Running this application through our package
 
