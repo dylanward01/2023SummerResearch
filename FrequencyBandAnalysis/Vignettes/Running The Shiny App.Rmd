@@ -21,6 +21,6 @@ Currently, there are 3 different ways that this application can be run (running 
 
 # 3.) Running this application through Docker
 
-1. Open your command line, and run the command docker pull dylanward01/frequencybandanalysis:0.9.1
-2. After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:0.9.1 (or replacing the 3838:3838 with whatever port you wish to run this application through).
+1. Open your command line, and run the command docker pull dylanward01/frequencybandanalysis:latest (or replacing the latest with whichever specific version you want to use).
+2. After the image finishes pulling, run the command docker run -d --rm -p 3838:3838 dylanward01/frequencybandanalysis:latest (or replacing the 3838:3838 with whatever port you wish to run this application through, and/or replacing the latest with whichever version you chose).
 3. Once that command finishes, and the application has loaded (which will take a few minutes after the command finishes), open up your favorite web browser, and type in localhost:3838 (or again replacing the 3838 if you chose a different port number), and proceed to run through and enjoy the shiny application.
