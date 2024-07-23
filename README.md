@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/667553720.svg)](https://zenodo.org/doi/10.5281/zenodo.12797848)
+
 ### This application serves to provide a way to find and analyze frequency bands in Univariate, Multivariate, and Functional data, in a graphic-based, user-friendly manner.
 
 ## Repository Contents
